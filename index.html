@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>期货基差表</title>
+<title>期货基差一览</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -21,129 +21,208 @@
   body {
     font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", Roboto, sans-serif;
     background: var(--bg); color: var(--ink);
-    padding: 22px; min-height: 100vh;
+    padding: 20px; min-height: 100vh;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 1500px; margin: 0 auto; }
+  .wrap { max-width: 1620px; margin: 0 auto; }
 
   /* ---------- header ---------- */
   header {
     display: flex; justify-content: space-between; align-items: flex-end;
-    flex-wrap: wrap; gap: 10px; margin-bottom: 16px;
+    flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
   }
-  h1 { font-size: 25px; font-weight: 700; letter-spacing: -0.3px; }
-  h1 .sub { font-size: 13px; font-weight: 400; color: var(--ink3); margin-left: 8px; }
-  .meta { font-size: 12.5px; color: var(--ink3); }
+  h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.3px; }
+  h1 .sub { font-size: 12.5px; font-weight: 400; color: var(--ink3); margin-left: 8px; }
+  .meta { font-size: 12.5px; color: var(--ink3); font-variant-numeric: tabular-nums; }
   .meta b { color: var(--ink2); font-weight: 600; }
   .meta span + span { margin-left: 14px; }
 
   /* ---------- toolbar ---------- */
   .toolbar {
-    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
     background: var(--card); border: 1px solid var(--line);
-    border-radius: 12px; padding: 10px 14px; margin-bottom: 14px;
+    border-radius: 12px; padding: 9px 12px; margin-bottom: 12px;
     box-shadow: 0 1px 2px rgba(16,24,40,.04);
   }
-  select {
-    font: inherit; font-size: 14px; font-weight: 600; color: var(--ink);
-    padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px;
-    background: #fff; min-width: 190px; cursor: pointer; outline: none;
+  .search {
+    font: inherit; font-size: 13px; color: var(--ink);
+    padding: 7px 11px; border: 1px solid var(--line); border-radius: 8px;
+    background: #fff; width: 200px; outline: none;
   }
-  select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(44,92,240,.12); }
+  .search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(44,92,240,.12); }
+  .search::placeholder { color: var(--ink3); }
 
-  .base {
-    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
-    font-size: 13px; color: var(--ink2);
-    padding-left: 14px; border-left: 1px solid var(--line);
+  .sel {
+    font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink2);
+    padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px;
+    background: #fff; cursor: pointer; outline: none;
   }
-  .base .k { color: var(--ink3); }
-  .base .v { font-weight: 700; font-size: 15px; color: var(--ink); font-variant-numeric: tabular-nums; }
-  .base .tag {
-    font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 5px;
-    background: #eef2ff; color: #3538cd;
-  }
-  .base .date { color: var(--ink3); font-size: 12px; }
+  .sel:focus { border-color: var(--accent); }
 
-  .views { margin-left: auto; display: flex; gap: 4px; background: #f2f4f7; padding: 3px; border-radius: 9px; }
-  .views button {
-    font: inherit; font-size: 12.5px; color: var(--ink2); background: none; border: 0;
-    padding: 6px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap;
+  .tabs { display: flex; gap: 3px; flex-wrap: wrap; }
+  .tabs button {
+    font: inherit; font-size: 12.5px; color: var(--ink2); background: none;
+    border: 0; padding: 6px 9px; border-radius: 7px; cursor: pointer; white-space: nowrap;
   }
-  .views button:hover { color: var(--ink); }
-  .views button.on { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(16,24,40,.1); }
+  .tabs button em { font-style: normal; font-size: 10.5px; color: var(--ink3); margin-left: 3px; }
+  .tabs button:hover { background: #f4f6fa; color: var(--ink); }
+  .tabs button.on { background: #eef2ff; color: #3538cd; font-weight: 600; }
+  .tabs button.on em { color: #6366f1; }
+
+  .note { font-size: 11.5px; color: var(--ink3); white-space: nowrap; }
+  .note b { font-weight: 600; }
+  .note .pos { color: var(--up); }
+  .note .neg { color: var(--down); }
+
+  .btn {
+    font: inherit; font-size: 12.5px; color: var(--ink2); background: #fff;
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 11px;
+    cursor: pointer; white-space: nowrap; margin-left: auto;
+  }
+  .btn:hover { color: var(--accent); border-color: #c7d2fe; }
 
   /* ---------- card ---------- */
   .card {
     background: var(--card); border: 1px solid var(--line); border-radius: 12px;
-    box-shadow: 0 1px 2px rgba(16,24,40,.04); margin-bottom: 14px;
+    box-shadow: 0 1px 2px rgba(16,24,40,.04); overflow: hidden; margin-bottom: 12px;
   }
+  .list-card { overflow: visible; }
   .card-head {
     display: flex; justify-content: space-between; align-items: baseline;
-    gap: 10px; flex-wrap: wrap; padding: 14px 16px 0;
+    gap: 10px; flex-wrap: wrap; padding: 12px 15px 2px;
   }
   .card-head h2 { font-size: 14px; font-weight: 700; }
-  .card-head .hint { font-size: 12px; color: var(--ink3); }
-
-  /* ---------- legend ---------- */
-  .legend {
-    display: flex; flex-wrap: wrap; gap: 4px 6px; padding: 10px 16px 0;
-  }
-  .lg {
-    display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
-    font-size: 11.5px; color: var(--ink2); padding: 3px 8px 3px 6px;
-    border-radius: 20px; border: 1px solid transparent; user-select: none;
-    font-variant-numeric: tabular-nums;
-  }
-  .lg:hover { background: #f4f6fa; }
-  .lg i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; flex: none; }
-  .lg.off { color: var(--ink3); opacity: .55; }
-  .lg.off i { background: #cbd5e1 !important; }
-  .lg .p { color: var(--ink); font-weight: 600; }
+  .card-head .hint { font-size: 11.5px; color: var(--ink3); }
+  .card-head .hint b { color: var(--ink2); font-weight: 600; }
+  .lg-pos { color: var(--up); font-weight: 600; }
+  .lg-neg { color: var(--down); font-weight: 600; }
 
   /* ---------- chart ---------- */
-  .chart { position: relative; padding: 6px 8px 4px; }
+  .chart { position: relative; padding: 2px 8px 0; }
   .chart svg { display: block; width: 100%; overflow: visible; }
   .grid { stroke: #eef1f6; stroke-width: 1; }
-  .axis text { fill: var(--ink3); font-size: 11px; font-variant-numeric: tabular-nums; }
-  .baseline { stroke: #94a3b8; stroke-width: 1.4; stroke-dasharray: 5 4; }
-  .baseline-label { fill: #64748b; font-size: 11px; font-weight: 600; }
-  .hoverline { stroke: #cbd5e1; stroke-width: 1; stroke-dasharray: 3 3; }
-  .hit { fill: transparent; cursor: crosshair; }
+  .axis text { fill: var(--ink3); font-size: 10px; font-variant-numeric: tabular-nums; }
+  .zero { stroke: #94a3b8; stroke-width: 1.2; }
+  .bar { cursor: pointer; transition: opacity .12s; }
+  .bar:hover { opacity: .72; }
+  .xlabel { fill: #667085; font-size: 9.5px; }
 
-  .tip {
-    position: absolute; pointer-events: none; z-index: 5; opacity: 0;
+  .ctip {
+    position: absolute; pointer-events: none; z-index: 6; opacity: 0;
     background: rgba(255,255,255,.98); border: 1px solid var(--line);
     border-radius: 9px; padding: 8px 10px; font-size: 12px; color: var(--ink2);
-    box-shadow: 0 6px 24px rgba(16,24,40,.12); transition: opacity .1s;
-    font-variant-numeric: tabular-nums; min-width: 150px;
+    box-shadow: 0 8px 26px rgba(16,24,40,.14); transition: opacity .1s;
+    font-variant-numeric: tabular-nums; min-width: 190px;
   }
-  .tip.on { opacity: 1; }
-  .tip .d { font-weight: 700; color: var(--ink); margin-bottom: 5px; font-size: 12px; }
-  .tip .r { display: flex; align-items: center; gap: 6px; line-height: 1.55; }
-  .tip .r i { width: 8px; height: 8px; border-radius: 2px; flex: none; }
-  .tip .r .n { flex: 1; color: var(--ink3); }
-  .tip .r .v { color: var(--ink); font-weight: 600; }
-  .tip .r .b { color: var(--ink3); width: 52px; text-align: right; }
+  .ctip.on { opacity: 1; }
+  .ctip-d { font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+  .ctip-d span { font-size: 10px; font-weight: 700; color: #3538cd; background: #eef2ff;
+    padding: 1px 5px; border-radius: 4px; margin-left: 5px; vertical-align: 1px; }
+  .ctip-r { display: flex; gap: 10px; justify-content: space-between; line-height: 1.6; }
+  .ctip-r span { color: var(--ink3); }
+  .ctip-r b { color: var(--ink); font-weight: 600; }
+  .ctip-h { margin-top: 4px; padding-top: 4px; border-top: 1px solid #f2f4f7;
+    color: var(--ink3); font-size: 10.5px; }
 
   /* ---------- table ---------- */
   .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  thead th {
-    background: #f8fafc; color: var(--ink2); font-weight: 600; text-align: right;
-    padding: 10px 10px; white-space: nowrap; border-bottom: 1px solid var(--line);
-    cursor: pointer; user-select: none; position: sticky; top: 0;
+  table.ov {
+    width: 100%; min-width: 1060px; border-collapse: collapse;
+    font-size: 13px; table-layout: fixed;
   }
-  thead th:first-child, thead th:nth-child(2) { text-align: left; }
-  thead th:hover { color: var(--accent); }
-  thead th.sorted { color: var(--accent); }
-  thead th .ar { font-size: 9px; margin-left: 2px; }
-  tbody td {
-    padding: 9px 10px; text-align: right; white-space: nowrap;
+  table.ov thead th {
+    position: sticky; top: 0; z-index: 3;
+    background: #f8fafc; color: var(--ink2); font-weight: 600;
+    text-align: left; padding: 9px 12px; white-space: nowrap;
+    border-bottom: 1px solid var(--line); font-size: 12px;
+  }
+  table.ov thead th.num { text-align: right; }
+  table.ov thead th .th-note {
+    font-weight: 400; color: var(--ink3); font-size: 10.5px; margin-left: 5px;
+  }
+
+  tr.vrow { cursor: pointer; }
+  tr.vrow > td {
+    padding: 8px 12px; vertical-align: middle;
+    border-bottom: 1px solid #eef1f6; background: #fff;
+    transition: background .1s;
+  }
+  tr.vrow:hover > td { background: #f7f9fd; }
+  tr.vrow.open > td { background: #f4f7ff; border-bottom-color: #e3e9f7; }
+  tr.vrow:focus-visible { outline: 2px solid rgba(44,92,240,.45); outline-offset: -2px; }
+
+  .vname { font-weight: 700; font-size: 14px; }
+  .vcode {
+    font-size: 10.5px; font-weight: 700; color: #3538cd; background: #eef2ff;
+    padding: 1px 5px; border-radius: 4px; margin-left: 6px; vertical-align: 1px;
+  }
+  .ex { display: block; font-size: 11px; color: var(--ink3); margin-top: 2px; }
+
+  .mx-code { font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .mx-month { font-size: 10.5px; font-weight: 400; color: var(--ink3); margin-left: 5px; }
+  .mx-rate { font-size: 16px; font-weight: 700; line-height: 1.3; font-variant-numeric: tabular-nums; }
+  .mx-sub { font-size: 11px; color: var(--ink3); font-variant-numeric: tabular-nums; }
+
+  .px-row { display: flex; align-items: baseline; gap: 5px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+  .px-row span { font-size: 10.5px; color: var(--ink3); width: 22px; flex: none; }
+  .px-row b { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .px-sub { font-size: 10.5px; color: var(--ink3); margin-top: 1px; }
+
+  .chain { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip {
+    display: inline-flex; align-items: baseline; gap: 4px;
+    padding: 2px 6px; border-radius: 6px; white-space: nowrap;
+    background: #f6f8fb; border: 1px solid #edf0f5;
+    font-size: 11px; line-height: 1.4; font-variant-numeric: tabular-nums;
+  }
+  .chip em { font-style: normal; color: var(--ink3); }
+  .chip b { font-weight: 600; }
+  .chip.pos { background: #fef5f6; border-color: #fbe3e6; }
+  .chip.pos b { color: var(--up); }
+  .chip.neg { background: #f2fbf7; border-color: #ddf2e8; }
+  .chip.neg b { color: var(--down); }
+  .chip.max { box-shadow: 0 0 0 1.5px rgba(44,92,240,.55); }
+  .chip.max em { color: var(--ink2); font-weight: 600; }
+
+  td.num { text-align: right; color: var(--ink2); font-variant-numeric: tabular-nums; }
+  td.chev-cell { text-align: right; width: 30px; }
+  .chev {
+    display: inline-block; font-size: 20px; line-height: 1; color: var(--ink3);
+    transform: rotate(0deg); transition: transform .16s ease;
+  }
+  tr.vrow.open .chev { transform: rotate(90deg); color: var(--accent); }
+
+  tr.drow { display: none; }
+  tr.drow.open { display: table-row; }
+  tr.drow > td { padding: 0; background: #fbfcff; border-bottom: 1px solid var(--line); }
+
+  .detail { padding: 11px 14px 13px; }
+  .dbar {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 5px 14px;
+    font-size: 12px; color: var(--ink2); margin-bottom: 9px;
+    font-variant-numeric: tabular-nums;
+  }
+  .dbar .tag {
+    font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px;
+    background: #eef2ff; color: #3538cd;
+  }
+  .dbar b { color: var(--ink); font-weight: 700; }
+  .dbar .hint { margin-left: auto; color: var(--ink3); font-size: 11px; }
+
+  table.ct { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.ct th {
+    background: #f5f7fb; color: var(--ink2); font-weight: 600; text-align: right;
+    padding: 7px 10px; white-space: nowrap; border-bottom: 1px solid var(--line);
+  }
+  table.ct th:first-child, table.ct th:nth-child(2) { text-align: left; }
+  table.ct td {
+    padding: 7px 10px; text-align: right; white-space: nowrap;
     border-bottom: 1px solid #f2f4f7; font-variant-numeric: tabular-nums;
   }
-  tbody td:nth-child(1), tbody td:nth-child(2) { text-align: left; }
-  tbody tr:hover td { background: #f7f9fd; }
-  tbody tr:last-child td { border-bottom: 0; }
+  table.ct td:first-child, table.ct td:nth-child(2) { text-align: left; }
+  table.ct tr:last-child td { border-bottom: 0; }
+  table.ct tr.main td { background: #fffdf5; }
+  table.ct tr.ext td { background: #f4f7ff; }
   td.c { font-weight: 600; color: var(--ink); }
   td.m { color: var(--ink3); }
   .up { color: var(--up); }
@@ -151,15 +230,13 @@
   .b-pos { color: var(--up); font-weight: 600; }
   .b-neg { color: var(--down); font-weight: 600; }
   .pill {
-    font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 4px;
-    background: #fef3c7; color: #b45309; margin-left: 6px; vertical-align: 1px;
+    font-size: 9.5px; font-weight: 700; padding: 1px 5px; border-radius: 4px;
+    background: #fef3c7; color: #b45309; margin-left: 5px; vertical-align: 1px;
   }
-  .sect { color: var(--ink3); font-weight: 400; font-size: 11px; margin-left: 6px; }
-  .spark { display: block; width: 76px; height: 20px; margin-left: auto; }
+  .pill.ext-pill { background: #eef2ff; color: #3538cd; }
 
-  .foot { text-align: center; font-size: 11px; color: var(--ink3); line-height: 1.8; padding: 6px 0 18px; }
-  .foot a { color: inherit; }
-  .empty { padding: 60px; text-align: center; color: var(--ink3); }
+  .foot { text-align: center; font-size: 11px; color: var(--ink3); line-height: 1.8; padding: 8px 0 18px; }
+  .empty { padding: 42px; text-align: center; color: var(--ink3); }
   .spin {
     display: inline-block; width: 22px; height: 22px; border: 3px solid var(--line);
     border-top-color: var(--accent); border-radius: 50%;
@@ -171,23 +248,25 @@
     body { padding: 12px; }
     h1 { font-size: 20px; }
     h1 .sub { display: block; margin: 2px 0 0; }
-    .toolbar { padding: 10px; gap: 8px; }
-    select { min-width: 130px; flex: 1; }
-    .base { border-left: 0; padding-left: 0; width: 100%; }
-    .views { margin-left: 0; width: 100%; }
-    .views button { flex: 1; padding: 7px 4px; }
-    .legend { padding: 8px 10px 0; }
-    .card-head { padding: 12px 12px 0; }
-    table { font-size: 12px; }
-    thead th, tbody td { padding: 8px 7px; }
-    .spark { width: 56px; }
+    .toolbar { padding: 9px; gap: 8px; }
+    .search { width: 100%; }
+    .tabs { width: 100%; }
+    .tabs button { flex: 1; padding: 6px 3px; }
+    .note { display: none; }
+    .btn { margin-left: 0; flex: 1; }
+    .sel { flex: 1; }
+    .card-head { padding: 11px 12px 0; }
+    .dbar .hint { display: none; }
+  }
+  @media (min-width: 1100px) {
+    .table-wrap { overflow: visible; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>期货基差表<span class="sub">以最近交割价作基准，看后续活跃合约的基差</span></h1>
+    <h1>期货基差一览<span class="sub">每个品种找出 |基差率| 最大的合约，按矛盾大小筛选</span></h1>
     <div class="meta">
       <span>更新 <b id="mUpdate">—</b></span>
       <span>最近交易日 <b id="mTrade">—</b></span>
@@ -196,81 +275,120 @@
   </header>
 
   <div class="toolbar">
-    <select id="sel" aria-label="选择品种"></select>
-    <div class="base" id="base"></div>
-    <div class="views" id="views">
-      <button data-view="price" class="on">价格走势</button>
-      <button data-view="basis">基差走势</button>
-      <button data-view="term">期限结构</button>
-    </div>
+    <input id="search" class="search" type="search" placeholder="搜索品种名称 / 代码" autocomplete="off">
+    <div class="tabs" id="tabs"></div>
+    <select id="minRate" class="sel" aria-label="按基差率筛选">
+      <option value="0">全部基差率</option>
+      <option value="5">|基差率| ≥ 5%</option>
+      <option value="10">|基差率| ≥ 10%</option>
+      <option value="15">|基差率| ≥ 15%</option>
+      <option value="20">|基差率| ≥ 20%</option>
+    </select>
+    <span class="note">基差率：<b class="pos">红 = 贴水</b> · <b class="neg">绿 = 升水</b></span>
+    <button class="btn" id="toggleAll">全部展开</button>
   </div>
 
   <div class="card">
     <div class="card-head">
-      <h2 id="chartTitle">价格走势</h2>
+      <h2>基差矛盾排行</h2>
       <div class="hint" id="chartHint"></div>
     </div>
-    <div class="legend" id="legend"></div>
     <div class="chart" id="chart"><div class="empty"><span class="spin"></span>正在加载数据…</div></div>
   </div>
 
-  <div class="card">
+  <div class="card list-card">
     <div class="table-wrap">
-      <table id="table">
-        <thead><tr id="thead"></tr></thead>
-        <tbody id="tbody"><tr><td colspan="10" class="empty">加载中…</td></tr></tbody>
+      <table class="ov">
+        <colgroup>
+          <col style="width:14%">
+          <col style="width:15%">
+          <col style="width:13%">
+          <col>
+          <col style="width:5%">
+          <col style="width:38px">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>品种</th>
+            <th>最大基差矛盾 <span class="th-note">|基差率| 最大 · 表格按矛盾降序</span></th>
+            <th>最新结算 / 交割价</th>
+            <th>后续合约基差率 <span class="th-note">蓝框 = 该品种最大矛盾 · 悬停看价格</span></th>
+            <th class="num">合约</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="list">
+          <tr><td colspan="6" class="empty"><span class="spin"></span>正在加载数据…</td></tr>
+        </tbody>
       </table>
     </div>
   </div>
 
   <div class="foot">
     基差 = 最近交割合约的最后交易日结算价 − 合约最新结算价；基差率 = 基差 ÷ 交割价<br>
+    “最大基差矛盾”取每个品种中 |基差率| 最大的合约；价格为结算价，不带千分位<br>
+    已剔除股指/国债、贵金属、强麦等无成交品种，以及成交量 &lt; 50 且持仓量 &lt; 200 的僵尸合约<br>
     数据来源：新浪财经期货 · GitHub Actions 每个交易日自动更新 · 仅供学习参考，不构成投资建议
   </div>
 </div>
 
 <script>
-/* ============================== 配置 ============================== */
-const COLORS = ["#2c5cf0","#f97316","#0f9d76","#e0344b","#8b5cf6","#0891b2",
-                "#d97706","#db2777","#65a30d","#0284c7","#ea580c","#059669",
-                "#7c3aed","#be123c","#a16207","#0369a1","#9333ea","#4d7c0f",
-                "#64748b","#0f766e"];
+/* ============================== 工具 ============================== */
+const $ = id => document.getElementById(id);
+const EX_ORDER = ["大商所", "郑商所", "上期所", "上期能源", "广期所"];
 
-const COLS = [
-  { key: "code",     label: "合约",     align: "left",  fmt: v => v },
-  { key: "month",    label: "交割月",   align: "left",  fmt: v => v },
-  { key: "last",     label: "最新结算", align: "right", cls: "c" },
-  { key: "chg",      label: "涨跌",     align: "right", colored: true },
-  { key: "chg_pct",  label: "涨跌幅",   align: "right", colored: true, pct: true },
-  { key: "basis",    label: "基差",     align: "right", cls: "b" },
-  { key: "basis_rate", label: "基差率", align: "right", cls: "b", pct: true },
-  { key: "volume",   label: "成交量",   align: "right", fmt: v => fmtInt(v) },
-  { key: "position", label: "持仓量",   align: "right", fmt: v => fmtInt(v) },
-  { key: "spark",    label: "近一年",   align: "right", sortable: false },
-];
+// 价格不带千分位；最多两位小数，去掉无意义的 0
+const fmtPrice = v => {
+  if (v == null || isNaN(v)) return "—";
+  return Number(v).toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: 2 });
+};
+const fmtSignedNum = (v, maxFrac = 2) => {
+  if (v == null || isNaN(v)) return "—";
+  const s = Number(v).toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: maxFrac });
+  return (v > 0 ? "+" : "") + s;
+};
+const fmtPct = v => v == null || isNaN(v) ? "—" : (v > 0 ? "+" : "") + Number(v).toFixed(2) + "%";
+const fmtNum = (v, nd = 0) => v == null || isNaN(v) ? "—" : Number(v).toFixed(nd);
+const fmtInt = v => v == null || isNaN(v) ? "—" : Math.round(v).toLocaleString("zh-CN");
+const clsChg = v => v == null ? "" : v > 0 ? "up" : v < 0 ? "down" : "";
+const clsBasis = v => v == null ? "" : v > 0 ? "b-pos" : v < 0 ? "b-neg" : "";
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+}[c]));
+
+// 把刻度步长归整到 1/2/2.5/5/10 × 10^n
+function niceStep(raw) {
+  const p = Math.pow(10, Math.floor(Math.log10(Math.abs(raw) || 1)));
+  const n = Math.abs(raw) / p;
+  const m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10;
+  return m * p;
+}
+
+function shortName(name) {
+  let s = String(name || "")
+    .replace(/[（(].*?[)）]/g, "")
+    .replace(/期货$/, "");
+  if (s.includes("集运")) s = "集运欧线";
+  return s.length > 8 ? s.slice(0, 8) + "…" : s;
+}
+
+function maxContract(v) {
+  const chain = v.chain || [];
+  let best = null;
+  for (const c of chain) {
+    if (c.basis_rate == null) continue;
+    if (!best || Math.abs(c.basis_rate) > Math.abs(best.basis_rate)) best = c;
+  }
+  return best;
+}
 
 const state = {
   index: null,
-  data: null,
-  view: "price",
-  hidden: new Set(),
-  sortKey: "ym",
-  sortAsc: true,
-  hover: null,
+  ex: "",
+  q: "",
+  minRate: 0,
+  expanded: new Set(),
 };
-
-/* ============================== 工具 ============================== */
-const $ = id => document.getElementById(id);
-const fmtNum = (v, nd = 0) => v == null || isNaN(v)
-  ? "—"
-  : Number(v).toLocaleString("zh-CN", { minimumFractionDigits: nd, maximumFractionDigits: nd });
-const fmtInt = v => v == null || isNaN(v) ? "—" : Math.round(v).toLocaleString("zh-CN");
-const fmtSigned = (v, nd = 0) => v == null || isNaN(v) ? "—"
-  : (v > 0 ? "+" : "") + Number(v).toFixed(nd);
-const fmtPct = v => v == null || isNaN(v) ? "—" : (v > 0 ? "+" : "") + Number(v).toFixed(2) + "%";
-const priceNd = p => p >= 1000 ? 0 : p >= 100 ? 1 : 2;
-const clsNum = v => v == null ? "" : v > 0 ? "up" : v < 0 ? "down" : "";
-const clsBasis = v => v == null ? "" : v > 0 ? "b-pos" : v < 0 ? "b-neg" : "";
 
 /* ============================== 加载 ============================== */
 async function boot() {
@@ -279,184 +397,103 @@ async function boot() {
     if (!r.ok) throw new Error("HTTP " + r.status);
     state.index = await r.json();
   } catch (e) {
-    $("chart").innerHTML = `<div class="empty">加载失败：${e.message}<br>
-      <span style="font-size:12px">请先运行 pipeline.py 生成 data/index.json</span></div>`;
+    $("list").innerHTML = `<tr><td colspan="6" class="empty">加载失败：${esc(e.message)}<br>
+      <span style="font-size:12px">请先运行 pipeline.py 生成 data/index.json</span></td></tr>`;
     return;
   }
+  for (const v of state.index.varieties) v._max = maxContract(v);
+
   $("mUpdate").textContent = state.index.update_time || "—";
   $("mTrade").textContent = state.index.latest_trade_date || "—";
   $("mTotal").textContent = state.index.total ?? state.index.varieties.length;
-  buildSelect();
 
-  const raw = decodeURIComponent(location.hash.replace("#", ""));
-  const [hashCode, hashView] = raw.split("/");
-  if (VIEW_TITLE[hashView]) setView(hashView);
-  const keep = hashCode || localStorage.getItem("fb.variety");
-  const has = state.index.varieties.some(v => v.code === keep);
-  await load(has ? keep : state.index.varieties[0].code);
-}
-
-function buildSelect() {
-  const sel = $("sel");
-  const groups = {};
-  for (const v of state.index.varieties) (groups[v.exchange_short] ||= []).push(v);
-  const order = ["大商所", "郑商所", "上期所", "上期能源", "广期所"];
-  const keys = Object.keys(groups).sort(
-    (a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99));
-  let html = "";
-  for (const k of keys) {
-    html += `<optgroup label="${k}">`;
-    for (const v of groups[k].sort((a, b) => a.name.localeCompare(b.name, "zh")))
-      html += `<option value="${v.code}">${v.name} ${v.code}</option>`;
-    html += "</optgroup>";
-  }
-  sel.innerHTML = html;
-  sel.onchange = () => {
-    location.hash = sel.value;
-    load(sel.value);
-  };
-}
-
-async function load(code) {
-  $("sel").value = code;
-  $("chart").innerHTML = `<div class="empty"><span class="spin"></span>正在加载 ${code}…</div>`;
-  $("tbody").innerHTML = `<tr><td colspan="10" class="empty">加载中…</td></tr>`;
-  try {
-    const r = await fetch(`data/${code}.json?_=` + Date.now());
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    state.data = await r.json();
-  } catch (e) {
-    $("chart").innerHTML = `<div class="empty">${code} 加载失败：${e.message}</div>`;
-    return;
-  }
-  state.hidden.clear();
-  state.hover = null;
-  localStorage.setItem("fb.variety", code);
-  renderAll();
-}
-
-/* ============================== 渲染 ============================== */
-function renderAll() {
-  renderBase();
-  renderLegend();
+  renderTabs();
+  renderList();
   renderChart();
-  renderHead();
-  renderTable();
-  syncHash();
+
+  // 支持 #RB 直接定位并展开
+  const code = decodeURIComponent(location.hash.replace("#", "")).split("/")[0].toUpperCase();
+  if (code && state.index.varieties.some(v => v.code === code)) {
+    state.expanded.add(code);
+    renderList();
+    renderChart();
+    const row = document.querySelector(`tr.vrow[data-code="${code}"]`);
+    if (row) requestAnimationFrame(() => row.scrollIntoView({ block: "center" }));
+  }
 }
 
-function setView(v) {
-  if (!VIEW_TITLE[v]) v = "price";
-  state.view = v;
-  $("views").querySelectorAll("button")
-    .forEach(x => x.classList.toggle("on", x.dataset.view === v));
+/* ============================== 筛选 ============================== */
+function filtered() {
+  const q = state.q;
+  return state.index.varieties.filter(v => {
+    if (state.ex && v.exchange_short !== state.ex) return false;
+    if (state.minRate && (!v._max || Math.abs(v._max.basis_rate) < state.minRate)) return false;
+    if (!q) return true;
+    const hay = (v.name + " " + v.code + " " + v.delivery_contract + " " +
+      (v._max ? v._max.code : "")).toLowerCase();
+    return hay.includes(q);
+  });
 }
 
-function syncHash() {
-  if (!state.data) return;
-  const h = "#" + state.data.code + (state.view === "price" ? "" : "/" + state.view);
-  if (location.hash !== h) history.replaceState(null, "", h);
-}
+function renderTabs() {
+  const counts = {};
+  for (const v of state.index.varieties)
+    counts[v.exchange_short] = (counts[v.exchange_short] || 0) + 1;
 
-function renderBase() {
-  const d = state.data, dl = d.delivery;
-  const nd = priceNd(dl.price);
-  $("base").innerHTML = `
-    <span class="tag">最近交割</span>
-    <span class="v">${dl.contract}</span>
-    <span class="v">${fmtNum(dl.price, nd)}</span>
-    <span class="date">最后交易日 ${dl.date} · 结算价</span>
-    <span class="k">|</span>
-    <span class="k">后续活跃 <b style="color:var(--ink2)">${d.contracts.length}</b> 个合约</span>`;
-  document.title = `期货基差表 · ${d.name}${d.code}`;
-}
-
-function visibleContracts() {
-  return state.data.contracts.filter(c => !state.hidden.has(c.code));
-}
-
-function renderLegend() {
-  const lg = $("legend");
-  if (state.view === "term") { lg.innerHTML = ""; return; }
-  const d = state.data;
-  lg.innerHTML = d.contracts.map((c, i) => {
-    const off = state.hidden.has(c.code);
-    const p = c.last == null ? "—" : fmtNum(c.last, priceNd(c.last));
-    const sub = state.view === "basis"
-      ? `<span class="${clsBasis(c.basis)}">${fmtSigned(c.basis)}</span>`
-      : `<span class="p">${p}</span>`;
-    return `<span class="lg${off ? " off" : ""}" data-code="${c.code}" title="点击显示/隐藏">
-      <i style="background:${COLORS[i % COLORS.length]}"></i>${c.code} ${sub}</span>`;
-  }).join("");
-  lg.querySelectorAll(".lg").forEach(el => {
-    el.onclick = () => {
-      const c = el.dataset.code;
-      if (state.hidden.has(c)) state.hidden.delete(c); else state.hidden.add(c);
-      if (visibleContracts().length === 0) state.hidden.delete(c);
-      renderLegend(); renderChart();
+  const keys = Object.keys(counts).sort(
+    (a, b) => (EX_ORDER.indexOf(a) + 1 || 99) - (EX_ORDER.indexOf(b) + 1 || 99)
+  );
+  let html = `<button data-ex="" class="${state.ex ? "" : "on"}">全部<em>${state.index.varieties.length}</em></button>`;
+  for (const k of keys)
+    html += `<button data-ex="${esc(k)}" class="${state.ex === k ? "on" : ""}">${esc(k)}<em>${counts[k]}</em></button>`;
+  $("tabs").innerHTML = html;
+  $("tabs").querySelectorAll("button").forEach(b => {
+    b.onclick = () => {
+      state.ex = b.dataset.ex;
+      renderTabs();
+      renderList();
+      renderChart();
     };
   });
 }
 
-const VIEW_TITLE = {
-  price: ["价格走势", "各活跃合约日结算价 · 虚线为最近交割价"],
-  basis: ["基差走势", "基差 = 交割价 − 合约结算价 · 0 轴以上为期货贴水"],
-  term:  ["期限结构", "各合约相对最近交割价的基差率"],
-};
-
-/* 把刻度步长归整到 1/2/2.5/5/10 × 10^n */
-function niceStep(raw) {
-  const p = Math.pow(10, Math.floor(Math.log10(Math.abs(raw) || 1)));
-  const n = Math.abs(raw) / p;
-  const m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10;
-  return m * p;
-}
-
+/* ============================== 顶部排行图 ============================== */
 function renderChart() {
   const box = $("chart");
-  const d = state.data;
-  const [t, hint] = VIEW_TITLE[state.view];
-  $("chartTitle").textContent = t;
-  $("chartHint").textContent = hint;
-  box.innerHTML = "";
-  if (state.view === "term") return renderTerm(box);
+  const list = filtered().filter(v => v._max);
+  if (!list.length) {
+    box.innerHTML = `<div class="empty">没有匹配的品种</div>`;
+    $("chartHint").textContent = "";
+    return;
+  }
 
-  const series = visibleContracts();
-  if (!series.length) { box.innerHTML = `<div class="empty">没有可显示的合约</div>`; return; }
-
-  const W = Math.max(box.clientWidth || 900, 320);
-  const H = window.innerWidth < 820 ? 290 : 400;
-  const pad = { l: 54, r: 16, t: 12, b: 26 };
+  const items = list.slice().sort((a, b) => a._max.basis_rate - b._max.basis_rate);
+  const W = Math.max(box.clientWidth || 1100, 320);
+  const H = W < 700 ? 270 : 330;
+  const pad = { l: 44, r: 12, t: 12, b: W < 700 ? 74 : 88 };
   const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
 
-  // 数据
-  const dates = d.dates;
-  const base = d.delivery.price;
-  const isBasis = state.view === "basis";
-  const vals = series.map(c => c.prices.map(p => p == null ? null : (isBasis ? base - p : p)));
-
-  let lo = Infinity, hi = -Infinity;
-  for (const arr of vals) for (const v of arr) {
-    if (v == null) continue;
-    if (v < lo) lo = v; if (v > hi) hi = v;
+  let lo = 0, hi = 0;
+  for (const v of items) {
+    const r = v._max.basis_rate;
+    if (r < lo) lo = r;
+    if (r > hi) hi = r;
   }
-  if (isBasis) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
-  else { lo = Math.min(lo, base); hi = Math.max(hi, base); }
-  if (!isFinite(lo) || !isFinite(hi)) { box.innerHTML = `<div class="empty">无数据</div>`; return; }
-  // 整齐刻度
-  const stepY = niceStep((hi - lo) / 4 || 1);
+  const stepY = niceStep(((hi - lo) || 1) / 4);
   lo = Math.floor(lo / stepY) * stepY;
   hi = Math.ceil(hi / stepY) * stepY;
-  const nd = Math.max(0, Math.min(2, -Math.floor(Math.log10(stepY) + 1e-9)));
+  if (hi === lo) { hi = lo + stepY; lo = lo - stepY; }
+  const nd = Math.max(0, Math.min(1, -Math.floor(Math.log10(stepY) + 1e-9)));
 
-  const X = i => pad.l + (dates.length <= 1 ? 0 : i / (dates.length - 1) * iw);
   const Y = v => pad.t + ih - (v - lo) / (hi - lo) * ih;
+  const stepX = iw / items.length;
+  const bw = Math.max(2, Math.min(16, stepX * 0.64));
+  const X = i => pad.l + stepX * (i + 0.5);
 
   const svgNS = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(svgNS, "svg");
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.setAttribute("height", H);
-
   const el = (tag, attrs, text) => {
     const n = document.createElementNS(svgNS, tag);
     for (const k in attrs) n.setAttribute(k, attrs[k]);
@@ -465,283 +502,278 @@ function renderChart() {
     return n;
   };
 
-  // y 轴
+  // 横向网格 + y 轴
   const ticks = Math.max(1, Math.round((hi - lo) / stepY));
   for (let i = 0; i <= ticks; i++) {
     const v = lo + stepY * i;
     const y = Y(v);
     el("line", { x1: pad.l, x2: W - pad.r, y1: y, y2: y, class: "grid" });
-    el("text", { x: pad.l - 8, y: y + 3.5, "text-anchor": "end", class: "axis-t" },
-       fmtNum(v, nd));
+    el("text", { x: pad.l - 7, y: y + 3.5, "text-anchor": "end", class: "axis" }, fmtNum(v, nd) + "%");
   }
 
-  // x 轴: 月份分界
-  const months = [];
-  let lastM = "";
-  dates.forEach((dt, i) => {
-    const m = dt.slice(0, 7);
-    if (m !== lastM) { months.push([i, m]); lastM = m; }
-  });
-  const skip = Math.ceil(months.length / (W < 560 ? 5 : 9));
-  months.forEach(([i, m], k) => {
-    if (k % skip) return;
-    const x = X(i);
-    el("line", { x1: x, x2: x, y1: pad.t, y2: pad.t + ih, class: "grid" });
-    el("text", { x, y: H - 8, "text-anchor": "middle" }, m.slice(2).replace("-", "/"));
-  });
-
-  // 基准线 (收盘价视图)
-  if (!isBasis && base >= lo && base <= hi) {
-    const y = Y(base);
-    el("line", { x1: pad.l, x2: W - pad.r, y1: y, y2: y, class: "baseline" });
-    el("text", {
-      x: W - pad.r, y: y - 6, "text-anchor": "end", class: "baseline-label",
-      stroke: "#fff", "stroke-width": 3, "paint-order": "stroke",
-    }, "交割价 " + fmtNum(base, priceNd(base)));
-  } else if (isBasis) {
-    const y = Y(0);
-    el("line", { x1: pad.l, x2: W - pad.r, y1: y, y2: y, class: "baseline" });
-  }
-
-  // 折线
-  series.forEach((c, idx) => {
-    const arr = vals[idx];
-    let dpath = "", pen = false;
-    for (let i = 0; i < arr.length; i++) {
-      const v = arr[i];
-      if (v == null) { pen = false; continue; }
-      dpath += (pen ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1) + " ";
-      pen = true;
-    }
-    if (!dpath) return;
-    el("path", {
-      d: dpath, fill: "none", stroke: COLORS[idx % COLORS.length],
-      "stroke-width": 1.8, "stroke-linejoin": "round", "stroke-linecap": "round",
-    });
-  });
-
-  // 交互层
-  const hover = el("line", { x1: 0, x2: 0, y1: pad.t, y2: pad.t + ih, class: "hoverline", opacity: 0 });
-  const dots = series.map((c, idx) => el("circle", {
-    r: 3, fill: "#fff", stroke: COLORS[idx % COLORS.length], "stroke-width": 2, opacity: 0,
-  }));
-  const hit = el("rect", { x: pad.l, y: pad.t, width: iw, height: ih, class: "hit" });
+  // 0 轴
+  const y0 = Y(0);
+  el("line", { x1: pad.l, x2: W - pad.r, y1: y0, y2: y0, class: "zero" });
 
   const tip = document.createElement("div");
-  tip.className = "tip";
+  tip.className = "ctip";
+
+  const labelEvery = Math.max(1, Math.ceil(items.length / Math.max(8, Math.floor(iw / 20))));
+  items.forEach((v, i) => {
+    const m = v._max;
+    const rate = m.basis_rate;
+    const x = X(i);
+    const y = Y(rate);
+    const up = rate >= 0;
+    const rect = el("rect", {
+      x: x - bw / 2,
+      y: Math.min(y, y0),
+      width: bw,
+      height: Math.max(1, Math.abs(y0 - y)),
+      rx: Math.min(2, bw / 3),
+      fill: up ? "#e0344b" : "#12a06b",
+      opacity: 0.86,
+      class: "bar",
+    });
+    rect.addEventListener("click", () => locate(v.code));
+    rect.addEventListener("mousemove", ev => {
+      tip.innerHTML = `<div class="ctip-d">${esc(v.name)}<span>${esc(v.code)}</span></div>
+        <div class="ctip-r"><span>最大矛盾</span><b>${esc(m.code)} · ${fmtPct(rate)}</b></div>
+        <div class="ctip-r"><span>最新 / 交割</span><b>${fmtPrice(m.last)} / ${fmtPrice(v.delivery_price)}</b></div>
+        <div class="ctip-r"><span>基差</span><b>${fmtSignedNum(m.basis)}</b></div>
+        <div class="ctip-r"><span>交割月</span><b>${esc(m.month)}</b></div>
+        <div class="ctip-h">点击定位下方明细</div>`;
+      tip.classList.add("on");
+      const br = box.getBoundingClientRect();
+      let left = ev.clientX - br.left + 12;
+      if (left + tip.offsetWidth > br.width - 6) left = ev.clientX - br.left - tip.offsetWidth - 12;
+      let top = ev.clientY - br.top - 10;
+      top = Math.max(6, Math.min(br.height - tip.offsetHeight - 6, top));
+      tip.style.left = Math.max(6, left) + "px";
+      tip.style.top = top + "px";
+    });
+    rect.addEventListener("mouseleave", () => tip.classList.remove("on"));
+
+    if (i % labelEvery === 0) {
+      const tx = x;
+      const ty = H - 8;
+      el("text", {
+        x: 0, y: 0, class: "xlabel", "text-anchor": "start",
+        transform: `translate(${tx} ${ty}) rotate(-90)`,
+      }, shortName(v.name));
+    }
+  });
+
+  box.innerHTML = "";
   box.appendChild(svg);
   box.appendChild(tip);
-
-  const move = ev => {
-    const rect = svg.getBoundingClientRect();
-    const mx = (ev.clientX - rect.left) / rect.width * W;
-    let i = Math.round((mx - pad.l) / (iw || 1) * (dates.length - 1));
-    i = Math.max(0, Math.min(dates.length - 1, i));
-    hover.setAttribute("x1", X(i)); hover.setAttribute("x2", X(i));
-    hover.setAttribute("opacity", 1);
-
-    const rows = [];
-    series.forEach((c, idx) => {
-      const v = vals[idx][i];
-      const dot = dots[idx];
-      if (v == null) { dot.setAttribute("opacity", 0); return; }
-      dot.setAttribute("cx", X(i)); dot.setAttribute("cy", Y(v)); dot.setAttribute("opacity", 1);
-      rows.push({ c, v, idx });
-    });
-    rows.sort((a, b) => isBasis ? a.v - b.v : b.v - a.v);
-
-    const nd2 = priceNd(base);
-    tip.innerHTML = `<div class="d">${dates[i]}</div>` + rows.slice(0, 12).map(r => {
-      const px = isBasis ? base - r.v : r.v;
-      const b = base - px;
-      return `<div class="r"><i style="background:${COLORS[r.idx % COLORS.length]}"></i>
-        <span class="n">${r.c.code}</span>
-        <span class="v">${fmtNum(px, nd2)}</span>
-        <span class="b ${clsBasis(b)}">${fmtSigned(b, nd2)}</span></div>`;
-    }).join("") + (rows.length > 12 ? `<div class="r"><span class="n">…共 ${rows.length} 条</span></div>` : "");
-
-    const rx = X(i) / W * rect.width;
-    tip.classList.add("on");
-    const tw = tip.offsetWidth, th = tip.offsetHeight;
-    let left = rx + 14;
-    if (left + tw > rect.width - 6) left = rx - tw - 14;
-    let top = Math.max(6, Math.min(rect.height - th - 6, ev.clientY - rect.top - th / 2));
-    tip.style.left = (left + 8) + "px";
-    tip.style.top = top + "px";
-  };
-  hit.addEventListener("mousemove", move);
-  hit.addEventListener("mouseleave", () => {
-    tip.classList.remove("on");
-    hover.setAttribute("opacity", 0);
-    dots.forEach(dt => dt.setAttribute("opacity", 0));
-  });
-  // 触摸
-  hit.addEventListener("touchmove", ev => {
-    if (ev.touches[0]) { move(ev.touches[0]); ev.preventDefault(); }
-  }, { passive: false });
-  hit.addEventListener("touchend", () => {
-    tip.classList.remove("on"); hover.setAttribute("opacity", 0);
-    dots.forEach(dt => dt.setAttribute("opacity", 0));
-  });
+  $("chartHint").innerHTML = `当前 <b>${items.length}</b> 个品种 · 每品种取 |基差率| 最大的合约 · ` +
+    `<span class="lg-pos">红 = 正基差</span> / <span class="lg-neg">绿 = 负基差</span> · 点击柱子定位明细`;
 }
 
-/* 期限结构: 每个合约一根基差率柱 */
-function renderTerm(box) {
-  const d = state.data;
-  const list = d.contracts;
-  const W = Math.max(box.clientWidth || 900, 320);
-  const H = window.innerWidth < 820 ? 300 : 380;
-  const pad = { l: 54, r: 16, t: 14, b: 28 };
-  const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
-  const svgNS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(svgNS, "svg");
-  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-  svg.setAttribute("height", H);
-  const el = (tag, attrs, text) => {
-    const n = document.createElementNS(svgNS, tag);
-    for (const k in attrs) n.setAttribute(k, attrs[k]);
-    if (text != null) n.textContent = text;
-    svg.appendChild(n);
-    return n;
-  };
-
-  const vals = list.map(c => c.basis_rate || 0);
-  let lo = Math.min(0, ...vals), hi = Math.max(0, ...vals);
-  const stepY = niceStep(((hi - lo) || 1) / 4);
-  lo = Math.floor(lo / stepY) * stepY;
-  hi = Math.ceil(hi / stepY) * stepY;
-  const nd = Math.max(0, Math.min(2, -Math.floor(Math.log10(stepY) + 1e-9)));
-  const Y = v => pad.t + ih - (v - lo) / (hi - lo) * ih;
-  const step = iw / list.length;
-  const bw = Math.max(6, Math.min(46, step * 0.58));
-  const X = i => pad.l + step * (i + 0.5);
-
-  const ticks = Math.max(1, Math.round((hi - lo) / stepY));
-  for (let i = 0; i <= ticks; i++) {
-    const v = lo + stepY * i, y = Y(v);
-    el("line", { x1: pad.l, x2: W - pad.r, y1: y, y2: y, class: "grid" });
-    el("text", { x: pad.l - 8, y: y + 3.5, "text-anchor": "end" }, fmtNum(v, nd) + "%");
-  }
-  const y0 = Y(0);
-  el("line", {
-    x1: pad.l, x2: W - pad.r, y1: y0, y2: y0,
-    stroke: "#94a3b8", "stroke-width": 1.2,
-  });
-
-  list.forEach((c, i) => {
-    const v = c.basis_rate || 0;
-    const y = Y(v);
-    const up = v >= 0;
-    el("rect", {
-      x: X(i) - bw / 2, y: Math.min(y, y0), width: bw, height: Math.max(1, Math.abs(y0 - y)),
-      rx: 2, fill: up ? "#e0344b" : "#12a06b", opacity: 0.85,
-    });
-    const txt = fmtSigned(v, nd) + "%";
-    el("text", {
-      x: X(i), y: up ? y - 5 : y + 12, "text-anchor": "middle",
-      fill: up ? "#e0344b" : "#12a06b", "font-size": 10, "font-weight": 600,
-    }, txt);
-    el("text", {
-      x: X(i), y: H - 10, "text-anchor": "middle", fill: "#475467",
-      "font-size": Math.min(11, step > 34 ? 11 : 9.5),
-    }, c.code.slice(d.code.length) || c.code);
-  });
-  box.appendChild(svg);
-}
-
-/* ============================== 表格 ============================== */
-function renderHead() {
-  const tr = $("thead");
-  tr.innerHTML = COLS.map(c => {
-    const on = c.key === state.sortKey;
-    return `<th class="${on ? "sorted" : ""}" data-key="${c.key}" data-sort="${c.sortable === false ? 0 : 1}"
-      style="text-align:${c.align}">${c.label}<span class="ar">${on ? (state.sortAsc ? "▲" : "▼") : ""}</span></th>`;
+/* ============================== 列表 ============================== */
+function summaryRow(v) {
+  const chain = v.chain || [];
+  const m = v._max;
+  const chips = chain.map(c => {
+    const cls = c.basis_rate > 0 ? "pos" : c.basis_rate < 0 ? "neg" : "";
+    const isMax = m && c.code === m.code;
+    return `<span class="chip ${cls}${isMax ? " max" : ""}" title="${esc(c.code)} · 最新 ${fmtPrice(c.last)} · 基差 ${fmtSignedNum(c.basis)}">
+      <em>${esc(c.code.slice(v.code.length))}</em><b>${fmtPct(c.basis_rate)}</b></span>`;
   }).join("");
-  tr.querySelectorAll("th").forEach(th => {
-    th.onclick = () => {
-      if (th.dataset.sort === "0") return;
-      const k = th.dataset.key;
-      if (k === state.sortKey) state.sortAsc = !state.sortAsc;
-      else { state.sortKey = k; state.sortAsc = true; }
-      renderHead(); renderTable();
-    };
-  });
+
+  const maxHtml = m ? `<div class="mx-code">${esc(m.code)}<span class="mx-month">${esc(m.month)}</span></div>
+      <div class="mx-rate ${clsBasis(m.basis_rate)}">${fmtPct(m.basis_rate)}</div>
+      <div class="mx-sub">基差 ${fmtSignedNum(m.basis)}</div>`
+    : `<span style="color:var(--ink3)">—</span>`;
+
+  const priceHtml = m ? `<div class="px-row"><span>最新</span><b>${fmtPrice(m.last)}</b></div>
+      <div class="px-row"><span>交割</span><b>${fmtPrice(v.delivery_price)}</b></div>
+      <div class="px-sub">${esc(v.delivery_contract)} · ${esc((v.delivery_date || "").slice(5))}</div>`
+    : `<span style="color:var(--ink3)">—</span>`;
+
+  return `<tr class="vrow" data-code="${esc(v.code)}" tabindex="0" role="button" aria-expanded="false">
+    <td>
+      <span class="vname">${esc(v.name)}</span><span class="vcode">${esc(v.code)}</span>
+      <span class="ex">${esc(v.exchange_short)}</span>
+    </td>
+    <td>${maxHtml}</td>
+    <td>${priceHtml}</td>
+    <td><div class="chain">${chips || '<span style="color:var(--ink3)">—</span>'}</div></td>
+    <td class="num">${chain.length}</td>
+    <td class="chev-cell"><span class="chev">›</span></td>
+  </tr>
+  <tr class="drow" data-code="${esc(v.code)}"><td colspan="6"><div class="detail"></div></td></tr>`;
 }
 
-function renderTable() {
-  const d = state.data;
-  const rows = [...d.contracts];
-  const k = state.sortKey, asc = state.sortAsc;
-  rows.sort((a, b) => {
-    const x = a[k], y = b[k];
-    if (typeof x === "string") return asc ? x.localeCompare(y) : y.localeCompare(x);
-    return asc ? (x - y) : (y - x);
-  });
-  const maxOi = Math.max(...d.contracts.map(c => c.position || 0));
-  const nd = priceNd(d.delivery.price);
-
-  $("tbody").innerHTML = rows.map(c => {
-    const isMain = c.position === maxOi && maxOi > 0;
-    const spark = sparkline(c.prices);
-    return `<tr>
-      <td class="c">${c.code}${isMain ? '<span class="pill">主力</span>' : ""}</td>
-      <td class="m">${c.month}</td>
-      <td class="c">${fmtNum(c.last, nd)}</td>
-      <td class="${clsNum(c.chg)}">${fmtSigned(c.chg, nd)}</td>
-      <td class="${clsNum(c.chg_pct)}">${fmtPct(c.chg_pct)}</td>
-      <td class="${clsBasis(c.basis)}">${fmtSigned(c.basis, nd)}</td>
+function detailHtml(v) {
+  const chain = v.chain || [];
+  const m = v._max;
+  const maxOi = Math.max(0, ...chain.map(c => c.position || 0));
+  const rows = chain.map(c => {
+    const main = maxOi > 0 && c.position === maxOi;
+    const ext = m && c.code === m.code;
+    return `<tr class="${main ? "main" : ""}${ext ? " ext" : ""}">
+      <td class="c">${esc(c.code)}${main ? '<span class="pill">主力</span>' : ""}${ext ? '<span class="pill ext-pill">最大矛盾</span>' : ""}</td>
+      <td class="m">${esc(c.month)}</td>
+      <td class="c">${fmtPrice(c.last)}</td>
+      <td class="${clsChg(c.chg)}">${fmtSignedNum(c.chg)}</td>
+      <td class="${clsChg(c.chg_pct)}">${fmtPct(c.chg_pct)}</td>
+      <td class="${clsBasis(c.basis)}">${fmtSignedNum(c.basis)}</td>
       <td class="${clsBasis(c.basis_rate)}">${fmtPct(c.basis_rate)}</td>
       <td>${fmtInt(c.volume)}</td>
       <td>${fmtInt(c.position)}</td>
-      <td>${spark}</td>
     </tr>`;
   }).join("");
+
+  return `<div class="dbar">
+      <span class="tag">基准交割</span>
+      <span>合约 <b>${esc(v.delivery_contract)}</b></span>
+      <span>最后交易日 <b>${esc(v.delivery_date || "—")}</b></span>
+      <span>交割价 <b>${fmtPrice(v.delivery_price)}</b></span>
+      <span>后续合约 <b>${chain.length}</b> 个</span>
+      <span class="hint">基差 = 交割价 − 合约最新结算价 · 蓝底 = 最大矛盾合约</span>
+    </div>
+    <table class="ct">
+      <thead><tr>
+        <th>合约</th><th>交割月</th><th>最新结算</th><th>涨跌</th><th>涨跌幅</th>
+        <th>基差</th><th>基差率</th><th>成交量</th><th>持仓量</th>
+      </tr></thead>
+      <tbody>${rows || '<tr><td colspan="9" class="empty">暂无合约数据</td></tr>'}</tbody>
+    </table>`;
 }
 
-function sparkline(arr) {
-  const vals = arr.filter(v => v != null);
-  if (vals.length < 2) return "";
-  const w = 76, h = 20, p = 2;
-  const lo = Math.min(...vals), hi = Math.max(...vals);
-  const span = hi - lo || 1;
-  const step = arr.length > 1 ? (w - p * 2) / (arr.length - 1) : 0;
-  let d = "", pen = false;
-  arr.forEach((v, i) => {
-    if (v == null) { pen = false; return; }
-    const x = p + i * step, y = h - p - (v - lo) / span * (h - p * 2);
-    d += (pen ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
-    pen = true;
+function renderList() {
+  // 默认按“最大矛盾”从大到小，直接筛出最值得看的品种
+  const list = filtered().slice().sort((a, b) => {
+    const x = a._max ? Math.abs(a._max.basis_rate) : -1;
+    const y = b._max ? Math.abs(b._max.basis_rate) : -1;
+    return y - x;
   });
-  const up = vals[vals.length - 1] >= vals[0];
-  return `<svg class="spark" viewBox="0 0 ${w} ${h}"><path d="${d}" fill="none"
-    stroke="${up ? "#e0344b" : "#12a06b"}" stroke-width="1.4" stroke-linejoin="round"/></svg>`;
+
+  if (!list.length) {
+    $("list").innerHTML = `<tr><td colspan="6" class="empty">没有匹配的品种</td></tr>`;
+    updateToggleLabel();
+    return;
+  }
+  $("list").innerHTML = list.map(summaryRow).join("");
+
+  // 恢复展开状态
+  for (const v of list) {
+    if (state.expanded.has(v.code)) applyOpen(v.code, true, false);
+  }
+  updateToggleLabel();
+}
+
+function applyOpen(code, open, setHash = true) {
+  const row = document.querySelector(`tr.vrow[data-code="${code}"]`);
+  const drow = document.querySelector(`tr.drow[data-code="${code}"]`);
+  if (!row || !drow) return;
+
+  row.classList.toggle("open", open);
+  row.setAttribute("aria-expanded", open);
+  drow.classList.toggle("open", open);
+
+  if (open) {
+    const box = drow.querySelector(".detail");
+    if (!box.dataset.rendered) {
+      const v = state.index.varieties.find(x => x.code === code);
+      if (v) {
+        box.innerHTML = detailHtml(v);
+        box.dataset.rendered = "1";
+      }
+    }
+    if (setHash) history.replaceState(null, "", "#" + code);
+  } else if (setHash) {
+    const h = location.hash.replace("#", "").split("/")[0];
+    if (!h || h.toUpperCase() === code) {
+      history.replaceState(null, "", location.pathname + location.search);
+    }
+  }
+}
+
+function toggle(code) {
+  const open = !state.expanded.has(code);
+  if (open) state.expanded.add(code); else state.expanded.delete(code);
+  applyOpen(code, open);
+  updateToggleLabel();
+}
+
+function locate(code) {
+  state.expanded.add(code);
+  renderList();
+  const row = document.querySelector(`tr.vrow[data-code="${code}"]`);
+  if (row) {
+    row.scrollIntoView({ block: "center", behavior: "smooth" });
+    applyOpen(code, true, true);
+  }
+}
+
+function updateToggleLabel() {
+  const list = filtered();
+  const allOpen = list.length > 0 && list.every(v => state.expanded.has(v.code));
+  $("toggleAll").textContent = allOpen ? "全部收起" : "全部展开";
 }
 
 /* ============================== 交互 ============================== */
-$("views").querySelectorAll("button").forEach(b => {
-  b.onclick = () => {
-    setView(b.dataset.view);
-    renderLegend(); renderChart(); syncHash();
-  };
+$("list").addEventListener("click", e => {
+  const row = e.target.closest("tr.vrow");
+  if (row) toggle(row.dataset.code);
+});
+
+$("list").addEventListener("keydown", e => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const row = e.target.closest("tr.vrow");
+  if (!row) return;
+  e.preventDefault();
+  toggle(row.dataset.code);
+});
+
+let searchTimer = null;
+$("search").addEventListener("input", e => {
+  const q = e.target.value.trim().toLowerCase();
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    state.q = q;
+    renderList();
+    renderChart();
+  }, 120);
+});
+
+$("minRate").addEventListener("change", e => {
+  state.minRate = Number(e.target.value) || 0;
+  renderList();
+  renderChart();
+});
+
+$("toggleAll").addEventListener("click", () => {
+  const list = filtered();
+  if (!list.length) return;
+  const allOpen = list.every(v => state.expanded.has(v.code));
+  for (const v of list) {
+    if (allOpen) state.expanded.delete(v.code);
+    else state.expanded.add(v.code);
+  }
+  for (const v of list) applyOpen(v.code, !allOpen, false);
+  updateToggleLabel();
+  if (!allOpen) history.replaceState(null, "", location.pathname + location.search);
 });
 
 let rt = null;
 window.addEventListener("resize", () => {
   clearTimeout(rt);
-  rt = setTimeout(() => { if (state.data) renderChart(); }, 180);
+  rt = setTimeout(() => { if (state.index) renderChart(); }, 180);
 });
 
 window.addEventListener("hashchange", () => {
   if (!state.index) return;
-  const raw = decodeURIComponent(location.hash.replace("#", ""));
-  const [code, view] = raw.split("/");
-  setView(view);
-  if (code && state.index.varieties.some(v => v.code === code) &&
-      (!state.data || state.data.code !== code)) {
-    load(code);
-  } else {
-    renderLegend(); renderChart(); syncHash();
-  }
+  const code = decodeURIComponent(location.hash.replace("#", "")).split("/")[0].toUpperCase();
+  if (!code) return;
+  if (!state.index.varieties.some(v => v.code === code)) return;
+  state.expanded.add(code);
+  renderList();
+  const row = document.querySelector(`tr.vrow[data-code="${code}"]`);
+  if (row) row.scrollIntoView({ block: "center" });
 });
 
 boot();

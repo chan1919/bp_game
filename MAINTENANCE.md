@@ -18,6 +18,12 @@
 交割价 = 该合约**最后一个持仓 > 0 的交易日**的结算价。
 （新浪会给已交割合约追加几根 `p=0`、价格失真的占位行，直接取最后一根会拿到错的数。）
 
+### 僵尸合约/品种过滤
+
+- **品种层面**：`EXCLUDE_EXCHANGE = {"cffex"}` 剔除中金所；`EXCLUDE_PREFIX` 剔除贵金属和已无成交的历史遗留品种（强麦 WH、普麦 PM、粳稻 JR、早籼稻 RI、晚籼稻 LR、菜籽 RS、动力煤 ZC、线材 WR、纤维板 FB、胶合板 BB 等）。
+- **合约层面**：日成交量 `< MIN_VOLUME`（默认 50）**且**持仓量 `< MIN_POSITION`（默认 200）的合约视为僵尸合约，不进入页面；两者任一达标即保留，避免误伤“持仓大但当天成交少”的远月套保合约。
+- 过滤后活跃合约不足 `MIN_LIVE`（默认 3）个的品种会直接跳过。
+
 ## 常见维护
 
 ### 加/减品种
@@ -63,8 +69,8 @@ EXCLUDE_PREFIX = {
 ### 数据文件
 
 ```
-data/index.json     品种索引 + 更新时间 + 失败列表
-data/<CODE>.json    {delivery, dates[], contracts[{...,prices[]}]}
+data/index.json     品种索引 + 更新时间 + 每个品种的合约阶梯（chain），一览页直接读取
+data/<CODE>.json    {delivery, dates[], contracts[{...,prices[]}]}，历史明细备用
 ```
 
 `prices` 与 `dates` 等长，未上市/停牌为 `null`。

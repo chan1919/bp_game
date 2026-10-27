@@ -13,11 +13,11 @@
 基差率 = 基差 / 交割价 * 100%
 
 输出:
-  data/index.json      品种索引
-  data/<CODE>.json     单品种明细 (前端按需加载)
+  data/index.json      品种索引 + 每个品种的合约阶梯 (一览页直接读取)
+  data/<CODE>.json     单品种历史明细 (价格序列, 备用)
 
-注意: 只做商品期货. 贵金属、中金所(股指/国债)、集运指数 等已剔除,
-      见 EXCLUDE_PREFIX / EXCLUDE_EXCHANGE.
+注意: 只做商品期货. 贵金属、中金所(股指/国债) 已剔除,
+      见 EXCLUDE_PREFIX / EXCLUDE_EXCHANGE. 集运指数(欧线)属于商品指数期货, 保留.
 """
 import argparse
 import json
@@ -38,6 +38,8 @@ WINDOW_DAYS = 365          # 展示窗口: 近 1 年
 MAX_MONTHS_BACK = 30       # 往前试探交割合约的最大月数
 MIN_LIVE = 3               # 后续活跃合约太少则不展示
 MIN_BARS = 20              # 时间轴太短则不展示
+MIN_VOLUME = 50            # 单合约日成交量低于此值 ...
+MIN_POSITION = 200         # ... 且持仓量也低于此值, 视为僵尸合约剔除
 WORKERS = 8
 TIMEOUT = 15
 RETRY = 3
@@ -66,20 +68,20 @@ EX_NAME = {
 EX_ORDER = ["dce", "czce", "shfe", "ine", "gfex"]
 
 # 新浪把能源中心的品种挂在 shfe 下, 这里按代码归位
-INE_PREFIX = {"SC", "NR", "LU", "BC"}
+INE_PREFIX = {"SC", "NR", "LU", "BC", "EC"}
 INE_NAME = "上海国际能源交易中心"
 
 # 中金所全部为金融期货(股指/国债), 不参与
 EXCLUDE_EXCHANGE = {"cffex"}
-# 按品种代码剔除: 贵金属 + 已停止交易/无成交的僵尸品种 + 非商品指数
+# 按品种代码剔除: 贵金属 + 已停止交易/无成交的僵尸品种
 EXCLUDE_PREFIX = {
     "AU",   # 黄金
     "AG",   # 白银
     "PT",   # 铂
     "PD",   # 钯
-    "EC",   # 集运指数(欧线), 现金交割指数期货
     "ZC",   # 动力煤 (无成交)
     "WH",   # 强麦 (无成交)
+    "PM",   # 普麦 (无成交)
     "JR",   # 粳稻 (无成交)
     "RI",   # 早籼稻 (无成交)
     "LR",   # 晚籼稻 (无成交)
@@ -364,6 +366,18 @@ def build_variety(v, latest_date, now, log):
         log("%s %-8s 有效合约太少(%d)" % (prefix, v["name"], len(series)))
         return None, None
 
+    # 剔除僵尸合约: 成交量和持仓量同时很低才剔除,
+    # 避免误伤持仓大但当天成交少的远月套保合约
+    liquid = [c for c in series
+              if c["volume"] >= MIN_VOLUME or c["position"] >= MIN_POSITION]
+    if len(liquid) < MIN_LIVE:
+        log("%s %-8s 活跃合约太少(%d)" % (prefix, v["name"], len(liquid)))
+        return None, None
+    if len(liquid) < len(series):
+        log("%s %-8s 剔除僵尸合约 %d 个" % (
+            prefix, v["name"], len(series) - len(liquid)))
+        series = liquid
+
     axis = sorted(dates)
     if len(axis) < MIN_BARS:
         log("%s %-8s 时间轴过短(%d)" % (prefix, v["name"], len(axis)))
@@ -413,6 +427,19 @@ def build_variety(v, latest_date, now, log):
         "contracts": len(out),
         "front": out[0]["code"],
         "front_basis_rate": out[0]["basis_rate"],
+        # 一览页需要的合约阶梯, 省去前端再逐个加载明细文件
+        "chain": [{
+            "code": c["code"],
+            "month": c["month"],
+            "ym": c["ym"],
+            "last": c["last"],
+            "chg": c["chg"],
+            "chg_pct": c["chg_pct"],
+            "basis": c["basis"],
+            "basis_rate": c["basis_rate"],
+            "volume": c["volume"],
+            "position": c["position"],
+        } for c in out],
     }
     log("%s %-8s 交割 %s @%s | 活跃 %d" % (
         prefix, v["name"], delivery["contract"], base, len(out)))
