@@ -84,8 +84,11 @@ EXCLUDE_PREFIX   = {"AU", "AG", "PT", "PD", ...}
    （站点地址 `https://<用户名>.github.io/bp_game/`）
 2. **Actions 权限**：Settings → Actions → General → Workflow permissions 选 **Read and write permissions**
    （否则机器人无法把数据 commit 回仓库）
-3. **Wiki**（可选）：Settings → Features → Wikis 勾选，然后新建第一个页面 `Home`，
+3. **Wiki**（可选）：Wiki 标签页 → Create the first page → 标题 `Home`，
    把 [WIKI.md](WIKI.md) 的内容贴进去
+
+> 工作流里的 `configure-pages` 带了 `enablement: true`，但 GITHUB_TOKEN 通常没有开启 Pages 的权限，
+> 第一次还是手动点一下最稳；开启后 `pages.yml` 每次 push 都会自动发布。
 
 两个工作流：
 

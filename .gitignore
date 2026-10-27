@@ -3,6 +3,3 @@ __pycache__/
 *.pyo
 .venv/
 venv/
-out*.txt
-probe.txt
-t*.py
