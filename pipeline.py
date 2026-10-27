@@ -65,6 +65,10 @@ EX_NAME = {
 }
 EX_ORDER = ["dce", "czce", "shfe", "ine", "gfex"]
 
+# 新浪把能源中心的品种挂在 shfe 下, 这里按代码归位
+INE_PREFIX = {"SC", "NR", "LU", "BC"}
+INE_NAME = "上海国际能源交易中心"
+
 # 中金所全部为金融期货(股指/国债), 不参与
 EXCLUDE_EXCHANGE = {"cffex"}
 # 按品种代码剔除: 贵金属 + 已停止交易/无成交的僵尸品种 + 非商品指数
@@ -244,6 +248,9 @@ def build_variety(v, latest_date, now, log):
     prefix = prefs.most_common(1)[0][0]
     if prefix in EXCLUDE_PREFIX:
         return None, None
+
+    if prefix in INE_PREFIX:
+        v = dict(v, ex="ine", exchange=INE_NAME, exchange_short="上期能源")
 
     contracts = {}
     for x in rows:

@@ -2,6 +2,8 @@
 
 以**最近一个已交割合约的最后交易日结算价**为基准（下称"交割价"），展示各品种后续全部活跃合约近一年的结算价走势，以及每个合约相对交割价的**基差**与**基差率**。
 
+在线地址：<https://chan1919.github.io/bp_game/>
+
 - 静态站点，纯 HTML + 原生 JS，无外部依赖
 - 数据由 GitHub Actions 每个交易日收盘后自动采集
 - 只做商品期货：贵金属（黄金/白银/铂/钯）、中金所（股指/国债）、集运指数等已剔除
@@ -73,6 +75,24 @@ EXCLUDE_PREFIX   = {"AU", "AG", "PT", "PD", ...}
 `sina` 的品种表里那些已无成交的僵尸品种（动力煤、强麦、粳稻、线材、纤维板、胶合板等）也一并剔除。
 
 维护细节见 [MAINTENANCE.md](MAINTENANCE.md)。
+
+## 部署（一次性设置）
+
+仓库里的 `index.html` + `data/` 就是整个站点，Actions 每天把新数据 commit 回来即可。
+
+1. **Pages**：Settings → Pages → Build and deployment → Source 选 **GitHub Actions**
+   （站点地址 `https://<用户名>.github.io/bp_game/`）
+2. **Actions 权限**：Settings → Actions → General → Workflow permissions 选 **Read and write permissions**
+   （否则机器人无法把数据 commit 回仓库）
+3. **Wiki**（可选）：Settings → Features → Wikis 勾选，然后新建第一个页面 `Home`，
+   把 [WIKI.md](WIKI.md) 的内容贴进去
+
+两个工作流：
+
+| 文件 | 作用 |
+| --- | --- |
+| `.github/workflows/daily_update.yml` | 交易日 17:45 跑 `pipeline.py`，把 `data/` commit & push |
+| `.github/workflows/pages.yml` | 每次 push 到 main 后发布 Pages |
 
 ---
 
