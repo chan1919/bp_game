@@ -1,0 +1,98 @@
+name: Daily Basis Update
+
+on:
+  schedule:
+    - cron: '45 9 * * 1-5'   # 北京时间 17:45, 结算价公布后
+    - cron: '0 0 1 * *'      # 每月 1 日保活, 防止 60 天无活动禁用定时任务
+  push:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'pipeline.py'
+      - '.github/workflows/daily_update.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  actions: write
+
+concurrency:
+  group: basis-update
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONIOENCODING: utf-8
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Print current time (debug)
+        run: |
+          echo "UTC time: $(date -u '+%Y-%m-%d %H:%M:%S')"
+          echo "Beijing time: $(date '+%Y-%m-%d %H:%M:%S')"
+          echo "Triggered by: ${{ github.event_name }}"
+
+      - name: Run pipeline
+        run: python pipeline.py
+
+      - name: Validate JSON
+        run: |
+          if grep -rn '<<<<<<<\|>>>>>>>' data/; then
+            echo "ERROR: conflict markers found in data/"
+            exit 1
+          fi
+          python - <<'PY'
+          import json, glob
+          files = sorted(glob.glob("data/*.json"))
+          for f in files:
+              with open(f, encoding="utf-8") as fh:
+                  json.load(fh)
+          idx = json.load(open("data/index.json", encoding="utf-8"))
+          if idx["total"] < 30:
+              raise SystemExit("品种数异常: %s" % idx["total"])
+          print("%d files ok, %d varieties" % (len(files), idx["total"]))
+          PY
+
+      - name: Commit and push
+        id: commit_push
+        run: |
+          git config user.name "Basis Bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --staged --quiet; then
+            echo "no-data-change=true" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "chore: daily basis update $(date '+%Y-%m-%d')"
+            git pull --rebase origin main
+            git push
+          fi
+
+      - name: Keepalive - touch file (monthly)
+        if: github.event_name == 'schedule' && github.event.schedule == '0 0 1 * *'
+        run: |
+          echo "Keepalive run: $(date -u '+%Y-%m-%d %H:%M:%S')" > .github/keepalive
+          git config user.name "Basis Bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/keepalive
+          git diff --staged --quiet || git commit -m "chore: keepalive $(date '+%Y-%m-%d')"
+          git pull --rebase origin main
+          git push
