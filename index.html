@@ -475,7 +475,7 @@ function renderChart() {
   // 手机上给每根柱子留出固定宽度, 让柱内代码和底部标签保持可读, 图表横向滚动
   const W = isNarrow ? Math.max(viewportW, items.length * 18 + 56) : viewportW;
   const H = isNarrow ? 300 : 330;
-  const pad = { l: 44, r: 12, t: 12, b: isNarrow ? 74 : 88 };
+  const pad = { l: 44, r: 12, t: 12, b: isNarrow ? 82 : 90 };
   const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
 
   let lo = 0, hi = 0;
@@ -585,7 +585,7 @@ function renderChart() {
       el("text", {
         x: 0, y: 0, class: "xlabel", "text-anchor": "start",
         transform: `translate(${tx} ${ty}) rotate(-90)`,
-      }, shortName(v.name));
+      }, `${v.code} ${shortName(v.name)}`);
     }
   });
 
