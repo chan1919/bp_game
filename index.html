@@ -106,6 +106,7 @@
   .bar { cursor: pointer; transition: opacity .12s; }
   .bar:hover { opacity: .72; }
   .xlabel { fill: #667085; font-size: 9.5px; }
+  .barcode { fill: #fff; font-weight: 700; pointer-events: none; }
 
   .ctip {
     position: absolute; pointer-events: none; z-index: 6; opacity: 0;
@@ -130,14 +131,14 @@
     width: 100%; min-width: 1060px; border-collapse: collapse;
     font-size: 13px; table-layout: fixed;
   }
-  table.ov thead th {
+  table.ov > thead > tr > th {
     position: sticky; top: 0; z-index: 3;
     background: #f8fafc; color: var(--ink2); font-weight: 600;
     text-align: left; padding: 9px 12px; white-space: nowrap;
     border-bottom: 1px solid var(--line); font-size: 12px;
   }
-  table.ov thead th.num { text-align: right; }
-  table.ov thead th .th-note {
+  table.ov > thead > tr > th.num { text-align: right; }
+  table.ov > thead > tr > th .th-note {
     font-weight: 400; color: var(--ink3); font-size: 10.5px; margin-left: 5px;
   }
 
@@ -257,6 +258,7 @@
     .sel { flex: 1; }
     .card-head { padding: 11px 12px 0; }
     .dbar .hint { display: none; }
+    .chart { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   }
   @media (min-width: 1100px) {
     .table-wrap { overflow: visible; }
@@ -468,9 +470,12 @@ function renderChart() {
   }
 
   const items = list.slice().sort((a, b) => a._max.basis_rate - b._max.basis_rate);
-  const W = Math.max(box.clientWidth || 1100, 320);
-  const H = W < 700 ? 270 : 330;
-  const pad = { l: 44, r: 12, t: 12, b: W < 700 ? 74 : 88 };
+  const viewportW = Math.max(box.clientWidth || 1100, 320);
+  const isNarrow = viewportW < 700;
+  // 手机上给每根柱子留出固定宽度, 让柱内代码和底部标签保持可读, 图表横向滚动
+  const W = isNarrow ? Math.max(viewportW, items.length * 18 + 56) : viewportW;
+  const H = isNarrow ? 300 : 330;
+  const pad = { l: 44, r: 12, t: 12, b: isNarrow ? 74 : 88 };
   const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
 
   let lo = 0, hi = 0;
@@ -494,6 +499,10 @@ function renderChart() {
   const svg = document.createElementNS(svgNS, "svg");
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.setAttribute("height", H);
+  if (isNarrow) {
+    svg.style.width = W + "px";
+    svg.style.maxWidth = "none";
+  }
   const el = (tag, attrs, text) => {
     const n = document.createElementNS(svgNS, tag);
     for (const k in attrs) n.setAttribute(k, attrs[k]);
@@ -518,18 +527,19 @@ function renderChart() {
   const tip = document.createElement("div");
   tip.className = "ctip";
 
-  const labelEvery = Math.max(1, Math.ceil(items.length / Math.max(8, Math.floor(iw / 20))));
+  const labelEvery = Math.max(1, Math.ceil(items.length / Math.max(8, Math.floor(iw / 14))));
   items.forEach((v, i) => {
     const m = v._max;
     const rate = m.basis_rate;
     const x = X(i);
     const y = Y(rate);
     const up = rate >= 0;
+    const barH = Math.max(1, Math.abs(y0 - y));
     const rect = el("rect", {
       x: x - bw / 2,
       y: Math.min(y, y0),
       width: bw,
-      height: Math.max(1, Math.abs(y0 - y)),
+      height: barH,
       rx: Math.min(2, bw / 3),
       fill: up ? "#e0344b" : "#12a06b",
       opacity: 0.86,
@@ -554,6 +564,21 @@ function renderChart() {
     });
     rect.addEventListener("mouseleave", () => tip.classList.remove("on"));
 
+    // 柱内写品种代码, 例如 LH / AP / BU, 一眼对应
+    const fs = Math.min(9, Math.max(6.5, bw * 0.62));
+    const needH = v.code.length * fs * 0.72 + 6;
+    if (bw >= 7 && barH >= needH) {
+      const attrs = {
+        x: 0, y: 0, class: "barcode", "font-size": fs,
+        "letter-spacing": "0.2",
+        transform: up
+          ? `translate(${x} ${y + 9}) rotate(-90)`
+          : `translate(${x} ${y - 4}) rotate(-90)`,
+        "text-anchor": up ? "end" : "start",
+      };
+      el("text", attrs, v.code);
+    }
+
     if (i % labelEvery === 0) {
       const tx = x;
       const ty = H - 8;
@@ -567,8 +592,9 @@ function renderChart() {
   box.innerHTML = "";
   box.appendChild(svg);
   box.appendChild(tip);
-  $("chartHint").innerHTML = `当前 <b>${items.length}</b> 个品种 · 每品种取 |基差率| 最大的合约 · ` +
-    `<span class="lg-pos">红 = 正基差</span> / <span class="lg-neg">绿 = 负基差</span> · 点击柱子定位明细`;
+  $("chartHint").innerHTML = `当前 <b>${items.length}</b> 个品种 · 柱内小字 = 品种代码 · ` +
+    `<span class="lg-pos">红 = 正基差</span> / <span class="lg-neg">绿 = 负基差</span> · ` +
+    (isNarrow ? `左右滑动查看，点柱子定位明细` : `点击柱子定位明细`);
 }
 
 /* ============================== 列表 ============================== */
