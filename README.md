@@ -96,8 +96,11 @@ EXCLUDE_PREFIX   = {"AU", "AG", "PT", "PD", ...}
 
 | 文件 | 作用 |
 | --- | --- |
-| `.github/workflows/daily_update.yml` | 交易日 17:45 跑 `pipeline.py`，把 `data/` commit & push |
+| `.github/workflows/daily_update.yml` | 交易日 17:45 跑 `pipeline.py`，19:30 兜底补跑，把 `data/` commit & push |
 | `.github/workflows/pages.yml` | 每次 push 到 main 后发布 Pages |
+
+> GitHub Actions 的定时任务可能因负载延迟甚至被丢弃。工作流已加 19:30 的兜底定时，并会在开跑前检查当天数据是否已经更新，避免重复提交。
+> 如果当天一直没更新，可在 GitHub 仓库的 **Actions → Daily Basis Update → Run workflow** 手动触发一次。
 
 ---
 

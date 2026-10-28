@@ -3,6 +3,7 @@ name: Daily Basis Update
 on:
   schedule:
     - cron: '45 9 * * 1-5'   # 北京时间 17:45, 结算价公布后
+    - cron: '30 11 * * 1-5'  # 北京时间 19:30, 兜底: 主定时被 GitHub 延迟/丢弃时补跑
     - cron: '0 0 1 * *'      # 每月 1 日保活, 防止 60 天无活动禁用定时任务
   push:
     branches: [main]
@@ -51,7 +52,19 @@ jobs:
           echo "Beijing time: $(date '+%Y-%m-%d %H:%M:%S')"
           echo "Triggered by: ${{ github.event_name }}"
 
+      - name: Check whether today's data is already updated
+        id: freshness
+        run: |
+          TODAY=$(date +%F)
+          if grep -q "\"update_time\":\"$TODAY" data/index.json; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "data already updated for $TODAY, scheduled run will skip"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Run pipeline
+        if: github.event_name != 'schedule' || steps.freshness.outputs.skip != 'true'
         run: python pipeline.py
 
       - name: Validate JSON

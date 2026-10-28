@@ -79,8 +79,12 @@ data/<CODE>.json    {delivery, dates[], contracts[{...,prices[]}]}，历史明�
 
 `.github/workflows/daily_update.yml`：
 
-- 交易日 `09:45 UTC`（北京时间 17:45）跑一次
+- 交易日 `09:45 UTC`（北京时间 17:45）主跑一次
+- 交易日 `11:30 UTC`（北京时间 19:30）兜底补跑；开跑前检查 `data/index.json` 的 `update_time` 是否已是当天，避免重复提交
 - 每月 1 日一次 keepalive，防止 GitHub 因 60 天无活动自动停用定时任务
 - 修改 `README.md` / `pipeline.py` / workflow 本身也会触发
+- 也可以手动触发：Actions → Daily Basis Update → Run workflow
+
+> GitHub 的 `schedule` 事件不保证准时，负载高时可能延迟数小时甚至被丢弃，所以才有 19:30 的兜底。
 
 GitHub Pages 由 `pages.yml` 在 push 后发布。
