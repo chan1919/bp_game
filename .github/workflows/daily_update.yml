@@ -109,3 +109,40 @@ jobs:
           git diff --staged --quiet || git commit -m "chore: keepalive $(date '+%Y-%m-%d')"
           git pull --rebase origin main
           git push
+
+  # GITHUB_TOKEN 推的 commit 不会触发 pages.yml, 所以这里直接部署一次
+  deploy:
+    needs: update
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout latest
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Validate data
+        run: |
+          if grep -rn '<<<<<<<\|>>>>>>>' data/; then
+            echo "ERROR: conflict markers found in data/"
+            exit 1
+          fi
+          python -c "import json,glob; [json.load(open(f,encoding='utf-8')) for f in glob.glob('data/*.json')]; print('json ok')"
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

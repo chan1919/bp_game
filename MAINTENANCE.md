@@ -84,7 +84,9 @@ data/<CODE>.json    {delivery, dates[], contracts[{...,prices[]}]}，历史明�
 - 每月 1 日一次 keepalive，防止 GitHub 因 60 天无活动自动停用定时任务
 - 修改 `README.md` / `pipeline.py` / workflow 本身也会触发
 - 也可以手动触发：Actions → Daily Basis Update → Run workflow
+- 提交数据后由同一 workflow 的 `deploy` job 直接部署 Pages；`pages.yml` 负责人工 push 的部署
 
 > GitHub 的 `schedule` 事件不保证准时，负载高时可能延迟数小时甚至被丢弃，所以才有 19:30 的兜底。
+> 另外，用 `GITHUB_TOKEN` 推的 commit 不会触发新的 workflow，因此不能只靠 `pages.yml` 的 push 触发来发布每日数据。
 
 GitHub Pages 由 `pages.yml` 在 push 后发布。
