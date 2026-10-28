@@ -106,7 +106,10 @@
   .bar { cursor: pointer; transition: opacity .12s; }
   .bar:hover { opacity: .72; }
   .xlabel { fill: #667085; font-size: 9.5px; }
-  .barcode { fill: #fff; font-weight: 700; pointer-events: none; }
+  .barlabel {
+    fill: #101828; font-weight: 700; pointer-events: none;
+    paint-order: stroke; stroke: #fff; stroke-width: 1.4; stroke-linejoin: round;
+  }
 
   .ctip {
     position: absolute; pointer-events: none; z-index: 6; opacity: 0;
@@ -475,7 +478,7 @@ function renderChart() {
   // 手机上给每根柱子留出固定宽度, 让柱内代码和底部标签保持可读, 图表横向滚动
   const W = isNarrow ? Math.max(viewportW, items.length * 18 + 56) : viewportW;
   const H = isNarrow ? 300 : 330;
-  const pad = { l: 44, r: 12, t: 12, b: isNarrow ? 82 : 90 };
+  const pad = { l: 44, r: 12, t: isNarrow ? 26 : 30, b: isNarrow ? 82 : 90 };
   const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
 
   let lo = 0, hi = 0;
@@ -564,19 +567,31 @@ function renderChart() {
     });
     rect.addEventListener("mouseleave", () => tip.classList.remove("on"));
 
-    // 柱内写品种代码, 例如 LH / AP / BU, 一眼对应
-    const fs = Math.min(9, Math.max(6.5, bw * 0.62));
-    const needH = v.code.length * fs * 0.72 + 6;
-    if (bw >= 7 && barH >= needH) {
-      const attrs = {
-        x: 0, y: 0, class: "barcode", "font-size": fs,
-        "letter-spacing": "0.2",
-        transform: up
-          ? `translate(${x} ${y + 9}) rotate(-90)`
-          : `translate(${x} ${y - 4}) rotate(-90)`,
-        "text-anchor": up ? "end" : "start",
-      };
-      el("text", attrs, v.code);
+    // 品种代码竖排放在柱子外侧: 红柱上方, 绿柱下方, 字母不旋转
+    if (bw >= 5) {
+      const fs = 7.5;
+      const lh = fs + 1;
+      const chars = v.code.split("");
+      const n = chars.length;
+      if (up) {
+        // 最后一个字母贴着柱顶, 往上依次排
+        const bottom = y - 4;
+        chars.forEach((ch, k) => {
+          el("text", {
+            x, y: bottom - (n - 1 - k) * lh,
+            class: "barlabel", "text-anchor": "middle", "font-size": fs,
+          }, ch);
+        });
+      } else {
+        // 第一个字母贴着柱底, 往下依次排
+        const top = y + 4 + fs;
+        chars.forEach((ch, k) => {
+          el("text", {
+            x, y: top + k * lh,
+            class: "barlabel", "text-anchor": "middle", "font-size": fs,
+          }, ch);
+        });
+      }
     }
 
     if (i % labelEvery === 0) {
@@ -585,14 +600,14 @@ function renderChart() {
       el("text", {
         x: 0, y: 0, class: "xlabel", "text-anchor": "start",
         transform: `translate(${tx} ${ty}) rotate(-90)`,
-      }, `${v.code} ${shortName(v.name)}`);
+      }, shortName(v.name));
     }
   });
 
   box.innerHTML = "";
   box.appendChild(svg);
   box.appendChild(tip);
-  $("chartHint").innerHTML = `当前 <b>${items.length}</b> 个品种 · 柱内小字 = 品种代码 · ` +
+  $("chartHint").innerHTML = `当前 <b>${items.length}</b> 个品种 · 柱外侧小字 = 品种代码（红上绿下） · ` +
     `<span class="lg-pos">红 = 正基差</span> / <span class="lg-neg">绿 = 负基差</span> · ` +
     (isNarrow ? `左右滑动查看，点柱子定位明细` : `点击柱子定位明细`);
 }
