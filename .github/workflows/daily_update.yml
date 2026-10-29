@@ -2,8 +2,14 @@ name: Daily Basis Update
 
 on:
   schedule:
-    - cron: '45 9 * * 1-5'   # 北京时间 17:45, 结算价公布后
-    - cron: '30 11 * * 1-5'  # 北京时间 19:30, 兜底: 主定时被 GitHub 延迟/丢弃时补跑
+    # GitHub 的 schedule 不保证准时, 这里放几组时间互相兜底.
+    # 16:00 前的计划任务会被跳过, 避免拿到未收盘的数据.
+    - cron: '45 3 * * 1-5'   # 北京 11:45, 用来抵消常见的数小时延迟
+    - cron: '30 5 * * 1-5'   # 北京 13:30, 同上
+    - cron: '45 9 * * 1-5'   # 北京 17:45, 主定时
+    - cron: '30 11 * * 1-5'  # 北京 19:30, 兜底
+    - cron: '30 13 * * 1-5'  # 北京 21:30, 兜底
+    - cron: '30 15 * * 1-5'  # 北京 23:30, 兜底
     - cron: '0 0 1 * *'      # 每月 1 日保活, 防止 60 天无活动禁用定时任务
   push:
     branches: [main]
@@ -11,6 +17,8 @@ on:
       - 'README.md'
       - 'pipeline.py'
       - '.github/workflows/daily_update.yml'
+  repository_dispatch:
+    types: [daily-update]
   workflow_dispatch:
 
 permissions:
@@ -31,6 +39,8 @@ jobs:
   update:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      changed: ${{ steps.commit_push.outputs.changed }}
 
     steps:
       - name: Checkout
@@ -52,13 +62,18 @@ jobs:
           echo "Beijing time: $(date '+%Y-%m-%d %H:%M:%S')"
           echo "Triggered by: ${{ github.event_name }}"
 
-      - name: Check whether today's data is already updated
+      - name: Check freshness and time
         id: freshness
         run: |
           TODAY=$(date +%F)
-          if grep -q "\"update_time\":\"$TODAY" data/index.json; then
+          HOUR=$(date +%-H)
+          if grep -q "\"update_time\":\"$TODAY" data/index.json \
+             && grep -q "\"latest_trade_date\":\"$TODAY" data/index.json; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "data already updated for $TODAY, scheduled run will skip"
+          elif [ "$HOUR" -lt 16 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Beijing time ${HOUR}:xx is before 16:00, scheduled run will skip"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
@@ -92,8 +107,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/
           if git diff --staged --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "no-data-change=true" >> "$GITHUB_OUTPUT"
           else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
             git commit -m "chore: daily basis update $(date '+%Y-%m-%d')"
             git pull --rebase origin main
             git push
@@ -113,6 +130,7 @@ jobs:
   # GITHUB_TOKEN 推的 commit 不会触发 pages.yml, 所以这里直接部署一次
   deploy:
     needs: update
+    if: needs.update.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:

@@ -96,11 +96,11 @@ EXCLUDE_PREFIX   = {"AU", "AG", "PT", "PD", ...}
 
 | 文件 | 作用 |
 | --- | --- |
-| `.github/workflows/daily_update.yml` | 交易日 17:45 跑 `pipeline.py`，19:30 兜底补跑，提交 `data/` 并直接部署 Pages |
+| `.github/workflows/daily_update.yml` | 交易日多组定时（北京时间 11:45 / 13:30 / 17:45 / 19:30 / 21:30 / 23:30）互相兜底；16:00 前跳过；提交 `data/` 后直接部署 Pages |
 | `.github/workflows/pages.yml` | 人工 push 到 main 后发布 Pages |
 
 > GitHub 用 `GITHUB_TOKEN` 推送的 commit 不会触发其他 workflow，所以 `daily_update.yml` 在提交数据后会自己部署一次 Pages；`pages.yml` 主要负责人工 push 的部署。
-> 如果当天一直没更新，可在 GitHub 仓库的 **Actions → Daily Basis Update → Run workflow** 手动触发一次。
+> GitHub 的 `schedule` 事件可能延迟数小时甚至被丢弃，所以放了多组时间互相兜底。如果当天一直没更新，可在 **Actions → Daily Basis Update → Run workflow** 手动触发一次。
 
 ---
 

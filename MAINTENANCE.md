@@ -79,14 +79,27 @@ data/<CODE>.json    {delivery, dates[], contracts[{...,prices[]}]}，历史明�
 
 `.github/workflows/daily_update.yml`：
 
-- 交易日 `09:45 UTC`（北京时间 17:45）主跑一次
-- 交易日 `11:30 UTC`（北京时间 19:30）兜底补跑；开跑前检查 `data/index.json` 的 `update_time` 是否已是当天，避免重复提交
+- 交易日多组定时（北京时间 11:45 / 13:30 / 17:45 / 19:30 / 21:30 / 23:30）互相兜底
+- 16:00 前执行的计划任务直接跳过，避免拿到未收盘的数据
+- 只有 `update_time` 和 `latest_trade_date` 都已经是当天时才跳过，避免白天代码 push 把当天数据“标记成已更新”
 - 每月 1 日一次 keepalive，防止 GitHub 因 60 天无活动自动停用定时任务
 - 修改 `README.md` / `pipeline.py` / workflow 本身也会触发
 - 也可以手动触发：Actions → Daily Basis Update → Run workflow
 - 提交数据后由同一 workflow 的 `deploy` job 直接部署 Pages；`pages.yml` 负责人工 push 的部署
+- 支持 `repository_dispatch`（事件类型 `daily-update`），方便外部 cron 服务调用
 
-> GitHub 的 `schedule` 事件不保证准时，负载高时可能延迟数小时甚至被丢弃，所以才有 19:30 的兜底。
+> GitHub 的 `schedule` 事件不保证准时。本仓库实际观察到过 5～7 小时的延迟，所以不能只依赖单个 17:45 的定时。
 > 另外，用 `GITHUB_TOKEN` 推的 commit 不会触发新的 workflow，因此不能只靠 `pages.yml` 的 push 触发来发布每日数据。
+
+### 可选：外部 cron 触发
+
+如果 GitHub 定时长期不准，可以在 cron-job.org 等外部服务里每个交易日 POST：
+
+```bash
+curl -X POST https://api.github.com/repos/chan1919/bp_game/dispatches \
+  -H "Authorization: Bearer <有 contents:write 权限的 PAT>" \
+  -H "Accept: application/vnd.github+json" \
+  -d '{"event_type":"daily-update"}'
+```
 
 GitHub Pages 由 `pages.yml` 在 push 后发布。
