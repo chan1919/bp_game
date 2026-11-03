@@ -3,10 +3,11 @@ name: Daily Basis Update
 on:
   schedule:
     # GitHub 的 schedule 不保证准时, 这里放几组时间互相兜底.
-    # 16:00 前的计划任务会被跳过, 避免拿到未收盘的数据.
-    - cron: '45 3 * * 1-5'   # 北京 11:45, 用来抵消常见的数小时延迟
-    - cron: '30 5 * * 1-5'   # 北京 13:30, 同上
-    - cron: '45 9 * * 1-5'   # 北京 17:45, 主定时
+    # 15:00 前的计划任务会被跳过, 避免拿到未收盘的数据.
+    - cron: '5 7 * * 1-5'    # 北京 15:05, 收盘后主定时
+    - cron: '20 7 * * 1-5'   # 北京 15:20, 数据可能延迟, 兜底
+    - cron: '0 8 * * 1-5'    # 北京 16:00, 兜底
+    - cron: '45 9 * * 1-5'   # 北京 17:45, 兜底
     - cron: '30 11 * * 1-5'  # 北京 19:30, 兜底
     - cron: '30 13 * * 1-5'  # 北京 21:30, 兜底
     - cron: '30 15 * * 1-5'  # 北京 23:30, 兜底
@@ -67,13 +68,22 @@ jobs:
         run: |
           TODAY=$(date +%F)
           HOUR=$(date +%-H)
-          if grep -q "\"update_time\":\"$TODAY" data/index.json \
+          # 只有 16:00 之后采集、且日期已是当天，才算“最终数据”可以跳过。
+          # 15:05 / 15:20 的早跑允许被后续定时覆盖，以便补上结算价。
+          UPD=$(sed -n 's/.*"update_time":"\([^"]*\)".*/\1/p' data/index.json | head -n1)
+          UPD_DATE=${UPD%% *}
+          UPD_HOUR=${UPD:11:2}
+          FINAL=no
+          if [ "$UPD_DATE" = "$TODAY" ] && [ "${UPD_HOUR:-0}" -ge 16 ] \
              && grep -q "\"latest_trade_date\":\"$TODAY" data/index.json; then
+            FINAL=yes
+          fi
+          if [ "$FINAL" = "yes" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "data already updated for $TODAY, scheduled run will skip"
-          elif [ "$HOUR" -lt 16 ]; then
+            echo "data already finalized for $TODAY, scheduled run will skip"
+          elif [ "$HOUR" -lt 15 ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "Beijing time ${HOUR}:xx is before 16:00, scheduled run will skip"
+            echo "Beijing time ${HOUR}:xx is before 15:00, scheduled run will skip"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
