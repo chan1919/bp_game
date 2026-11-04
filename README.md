@@ -39,22 +39,6 @@
 
 > 新浪对已交割合约会追加几根持仓为 0 的占位日线，价格失真，因此交割价取"最后一个持仓 > 0 的交易日"，而不是最后一根 K 线。
 
-## 本地运行
-
-```bash
-pip install requests
-python pipeline.py            # 生成 data/index.json 与 data/<品种>.json
-python -m http.server 8000    # 打开 http://localhost:8000
-```
-
-`pipeline.py` 常用参数：
-
-```bash
-python pipeline.py --only JD,RB,M   # 只跑指定品种
-python pipeline.py --limit 5        # 只跑前 5 个品种（调试）
-python pipeline.py --workers 8      # 并发数
-```
-
 ## 目录
 
 ```
@@ -96,7 +80,7 @@ EXCLUDE_PREFIX   = {"AU", "AG", "PT", "PD", ...}
 
 | 文件 | 作用 |
 | --- | --- |
-| `.github/workflows/daily_update.yml` | 交易日多组定时（北京时间 15:05 / 15:20 / 16:00 / 17:45 / 19:30 / 21:30 / 23:30）互相兜底；15:00 前跳过；16:00 后以结算价定稿；提交 `data/` 后直接部署 Pages |
+| `.github/workflows/daily_update.yml` | 交易日多组定时互相兜底：北京 09:00 / 10:30 / 12:00 / 13:30 作为延迟缓冲（15:00 前会跳过），15:05 主定时，15:20 / 16:00 / 17:45 / 19:30 / 21:30 / 23:30 兜底；16:00 后以结算价定稿；提交 `data/` 后直接部署 Pages |
 | `.github/workflows/pages.yml` | 人工 push 到 main 后发布 Pages |
 
 > GitHub 用 `GITHUB_TOKEN` 推送的 commit 不会触发其他 workflow，所以 `daily_update.yml` 在提交数据后会自己部署一次 Pages；`pages.yml` 主要负责人工 push 的部署。
