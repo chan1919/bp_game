@@ -330,8 +330,8 @@
   </div>
 
   <div class="foot">
-    基差 = 最近交割合约的最后交易日结算价 − 合约最新结算价；基差率 = 基差 ÷ 交割价<br>
-    “最大基差矛盾”取每个品种中 |基差率| 最大的合约；价格为结算价，不带千分位<br>
+    基差 = 最近交割合约的最后交易日收盘价 − 合约最新收盘价；基差率 = 基差 ÷ 合约最新收盘价<br>
+    “最大基差矛盾”取每个品种中 |基差率| 最大的合约；价格为收盘价，不带千分位<br>
     已剔除股指/国债、贵金属、强麦等无成交品种，以及成交量 &lt; 50 且持仓量 &lt; 200 的僵尸合约<br>
     数据来源：新浪财经期货 · GitHub Actions 每个交易日自动更新 · 仅供学习参考，不构成投资建议
   </div>
@@ -673,7 +673,7 @@ function detailHtml(v) {
       <span>最后交易日 <b>${esc(v.delivery_date || "—")}</b></span>
       <span>交割价 <b>${fmtPrice(v.delivery_price)}</b></span>
       <span>后续合约 <b>${chain.length}</b> 个</span>
-      <span class="hint">基差 = 交割价 − 合约最新结算价 · 蓝底 = 最大矛盾合约</span>
+      <span class="hint">基差 = 交割价 − 合约最新收盘价 · 蓝底 = 最大矛盾合约</span>
     </div>
     <table class="ct">
       <thead><tr>

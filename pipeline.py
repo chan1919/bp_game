@@ -6,11 +6,13 @@
   2. 每个品种拿到当前挂牌的全部合约, 从合约代码反推品种代码
      (如 白糖 的 mark 是 bst_qh, 但合约代码是 SR2701);
   3. 从最近月份开始逐月往前试探日线, 找到"最近一个已完成交割"的合约,
-     取最后交易日结算价作为"最近交割价"(基准);
-  4. 其余活跃合约取近 1 年日线结算价, 与基准计算基差 / 基差率.
+     取最后交易日收盘价作为"最近交割价"(基准);
+  4. 其余活跃合约取近 1 年日线收盘价, 与基准计算基差 / 基差率.
 
-基差   = 交割价 - 合约结算价   (现货视角, 期货升水时为负)
-基差率 = 基差 / 交割价 * 100%
+基差   = 交割价 - 合约收盘价   (现货视角, 期货升水时为负)
+基差率 = 基差 / 合约收盘价 * 100%
+         (正基差做多贴水合约、负基差做空升水合约, 分母都取实际交易的合约价,
+          避免负基差按较低的交割价计算而放大空头收益)
 
 输出:
   data/index.json      品种索引 + 每个品种的合约阶梯 (一览页直接读取)
@@ -290,7 +292,7 @@ def build_variety(v, latest_date, now, log):
                     if (num(b.get("p"), 0) or 0) > 0:
                         real = b
                         break
-                price = num(real.get("s")) or num(real.get("c"))
+                price = num(real.get("c")) or num(real.get("s"))
                 if not price or price <= 0:
                     break
                 delivery = {
@@ -331,9 +333,9 @@ def build_variety(v, latest_date, now, log):
             d = b.get("d") or ""
             if d < start:
                 continue
-            val = num(b.get("s"))
+            val = num(b.get("c"))
             if val is None or val <= 0:
-                val = num(b.get("c"))
+                val = num(b.get("s"))
             if val is not None:
                 px[d] = val
         if len(px) < 3:
@@ -398,7 +400,7 @@ def build_variety(v, latest_date, now, log):
             "volume": c["volume"],
             "position": c["position"],
             "basis": basis,
-            "basis_rate": round(basis / base * 100, 2),
+            "basis_rate": round(basis / (c["last"] or base) * 100, 2),
             "prices": [c["px"].get(d) for d in axis],
         })
 
@@ -529,7 +531,7 @@ def main():
         "update_time": now.strftime("%Y-%m-%d %H:%M"),
         "latest_trade_date": latest_date,
         "window_days": WINDOW_DAYS,
-        "basis_formula": "交割价 - 合约结算价",
+        "basis_formula": "交割价 - 合约收盘价",
         "total": len(results),
         "failed": failed,
         "varieties": [s for _, s in results],
