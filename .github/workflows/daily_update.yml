@@ -71,19 +71,29 @@ jobs:
         run: |
           TODAY=$(date +%F)
           HOUR=$(date +%-H)
-          if grep -q "\"update_time\":\"$TODAY" data/index.json \
+          # 15:xx 先出一版收盘价数据; 17:30 之后的那次更新才算定稿。
+          # 定稿前允许后续定时覆盖, 这样 18 点左右还会再刷新一次。
+          UPD=$(sed -n 's/.*"update_time":"\([^"]*\)".*/\1/p' data/index.json | head -n1)
+          UPD_DATE=${UPD%% *}
+          UPD_HM=${UPD#* }
+          FINAL=no
+          if [ "$UPD_DATE" = "$TODAY" ] \
+             && [[ "${UPD_HM:-00:00}" > "17:30" || "${UPD_HM:-00:00}" = "17:30" ]] \
              && grep -q "\"latest_trade_date\":\"$TODAY" data/index.json; then
+            FINAL=yes
+          fi
+          if [ "$FINAL" = "yes" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "data already updated for $TODAY, run will skip"
+            echo "data finalized for $TODAY at $UPD_HM, scheduled run will skip"
           elif [ "$HOUR" -lt 15 ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "Beijing time ${HOUR}:xx is before 15:00, run will skip"
+            echo "Beijing time ${HOUR}:xx is before 15:00, scheduled run will skip"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run pipeline
-        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.skip != 'true'
+        if: github.event_name != 'schedule' || steps.freshness.outputs.skip != 'true'
         run: python pipeline.py
 
       - name: Validate JSON

@@ -82,7 +82,8 @@ data/<CODE>.json    {delivery, dates[], contracts[{...,prices[]}]}，历史明�
 
 - 交易日多组定时：北京 09:00 / 10:30 / 12:00 / 13:30 作为延迟缓冲，15:05 主定时，之后 15:20 / 16:00 / 17:45 / 19:30 / 21:30 / 23:30 兜底
 - 15:00 前执行的计划任务直接跳过，避免拿到未收盘的数据（缓冲定时若被延迟到收盘后，则会真实更新）
-- 只有 `update_time` 与 `latest_trade_date` 都是当天时才跳过，避免重复采集
+- 15:xx 采集的是收盘价初稿；**17:30 之后采集的才算定稿**。定稿前允许后续定时覆盖，所以 18 点左右还会再刷新一次；定稿后当天剩余的定时才跳过
+- 定稿判断同时要求 `update_time` 是当天 17:30 之后、`latest_trade_date` 也是当天，避免重复采集
 - 每月 1 日一次 keepalive，防止 GitHub 因 60 天无活动自动停用定时任务
 - 修改 `README.md` / `pipeline.py` / workflow 本身也会触发
 - 也可以手动触发：Actions → Daily Basis Update → Run workflow
@@ -90,6 +91,7 @@ data/<CODE>.json    {delivery, dates[], contracts[{...,prices[]}]}，历史明�
 
 > GitHub 的 `schedule` 事件不保证准时。本仓库实际观察到过 5～7 小时的延迟，甚至整个时段丢单，所以不能只依赖单个 15:05 的定时。
 > 缓冲定时的思路是：正常情况它们在收盘前跑、被跳过；一旦被延迟到 15:00 之后，就正好补上一次真实更新。
+> 15:xx 只算收盘价初稿，17:30 后那次才算定稿；这样 18 点左右会再刷新一波，定稿后才会跳过当天剩余定时。
 > 另外，用 `GITHUB_TOKEN` 推的 commit 不会触发新的 workflow，因此不能只靠 `pages.yml` 的 push 触发来发布每日数据。
 
 GitHub Pages 由 `pages.yml` 在 push 后发布。
