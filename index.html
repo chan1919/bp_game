@@ -94,6 +94,26 @@
   .card-head h2 { font-size: 14px; font-weight: 700; }
   .card-head .hint { font-size: 11.5px; color: var(--ink3); }
   .card-head .hint b { color: var(--ink2); font-weight: 600; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button {
+    border: 0; background: #fff; color: var(--ink2); font-size: 11.5px;
+    padding: 4px 10px; cursor: pointer; font-family: inherit;
+  }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button.on { background: #eef2ff; color: #3538cd; font-weight: 700; }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #fff; vertical-align: 0; }
+  .dot.rel { border: 2px solid #3538cd; }
+  .dot.abs { border: 2px solid #d97706; }
+  .opt-line {
+    display: flex; align-items: baseline; gap: 5px; line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+  }
+  .opt-code { font-weight: 600; font-size: 12px; color: var(--ink); }
+  .opt-line b { font-size: 13px; font-weight: 700; }
+  .opt-sub {
+    font-size: 11px; color: var(--ink3); margin: 1px 0 3px 12px;
+    font-variant-numeric: tabular-nums;
+  }
   .lg-pos { color: var(--up); font-weight: 600; }
   .lg-neg { color: var(--down); font-weight: 600; }
 
@@ -131,7 +151,7 @@
   /* ---------- table ---------- */
   .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   table.ov {
-    width: 100%; min-width: 1060px; border-collapse: collapse;
+    width: 100%; min-width: 1120px; border-collapse: collapse;
     font-size: 13px; table-layout: fixed;
   }
   table.ov > thead > tr > th {
@@ -147,12 +167,11 @@
 
   tr.vrow { cursor: pointer; }
   tr.vrow > td {
-    padding: 8px 12px; vertical-align: middle;
+    padding: 6px 12px; vertical-align: middle;
     border-bottom: 1px solid #eef1f6; background: #fff;
     transition: background .1s;
   }
   tr.vrow:hover > td { background: #f7f9fd; }
-  tr.vrow.open > td { background: #f4f7ff; border-bottom-color: #e3e9f7; }
   tr.vrow:focus-visible { outline: 2px solid rgba(44,92,240,.45); outline-offset: -2px; }
 
   .vname { font-weight: 700; font-size: 14px; }
@@ -172,72 +191,41 @@
   .px-row b { font-size: 13px; font-weight: 600; color: var(--ink); }
   .px-sub { font-size: 10.5px; color: var(--ink3); margin-top: 1px; }
 
-  .chain { display: flex; flex-wrap: wrap; gap: 4px; }
-  .chip {
-    display: inline-flex; align-items: baseline; gap: 4px;
-    padding: 2px 6px; border-radius: 6px; white-space: nowrap;
-    background: #f6f8fb; border: 1px solid #edf0f5;
-    font-size: 11px; line-height: 1.4; font-variant-numeric: tabular-nums;
-  }
-  .chip em { font-style: normal; color: var(--ink3); }
-  .chip b { font-weight: 600; }
-  .chip.pos { background: #fef5f6; border-color: #fbe3e6; }
-  .chip.pos b { color: var(--up); }
-  .chip.neg { background: #f2fbf7; border-color: #ddf2e8; }
-  .chip.neg b { color: var(--down); }
-  .chip.max { box-shadow: 0 0 0 1.5px rgba(44,92,240,.55); }
-  .chip.max em { color: var(--ink2); font-weight: 600; }
-
   td.num { text-align: right; color: var(--ink2); font-variant-numeric: tabular-nums; }
-  td.chev-cell { text-align: right; width: 30px; }
-  .chev {
-    display: inline-block; font-size: 20px; line-height: 1; color: var(--ink3);
-    transform: rotate(0deg); transition: transform .16s ease;
-  }
-  tr.vrow.open .chev { transform: rotate(90deg); color: var(--accent); }
 
-  tr.drow { display: none; }
-  tr.drow.open { display: table-row; }
-  tr.drow > td { padding: 0; background: #fbfcff; border-bottom: 1px solid var(--line); }
-
-  .detail { padding: 11px 14px 13px; }
-  .dbar {
-    display: flex; align-items: center; flex-wrap: wrap; gap: 5px 14px;
-    font-size: 12px; color: var(--ink2); margin-bottom: 9px;
-    font-variant-numeric: tabular-nums;
-  }
-  .dbar .tag {
-    font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px;
-    background: #eef2ff; color: #3538cd;
-  }
-  .dbar b { color: var(--ink); font-weight: 700; }
-  .dbar .hint { margin-left: auto; color: var(--ink3); font-size: 11px; }
-
-  table.ct { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  table.ct th {
-    background: #f5f7fb; color: var(--ink2); font-weight: 600; text-align: right;
-    padding: 7px 10px; white-space: nowrap; border-bottom: 1px solid var(--line);
-  }
-  table.ct th:first-child, table.ct th:nth-child(2) { text-align: left; }
-  table.ct td {
-    padding: 7px 10px; text-align: right; white-space: nowrap;
-    border-bottom: 1px solid #f2f4f7; font-variant-numeric: tabular-nums;
-  }
-  table.ct td:first-child, table.ct td:nth-child(2) { text-align: left; }
-  table.ct tr:last-child td { border-bottom: 0; }
-  table.ct tr.main td { background: #fffdf5; }
-  table.ct tr.ext td { background: #f4f7ff; }
-  td.c { font-weight: 600; color: var(--ink); }
-  td.m { color: var(--ink3); }
   .up { color: var(--up); }
   .down { color: var(--down); }
   .b-pos { color: var(--up); font-weight: 600; }
   .b-neg { color: var(--down); font-weight: 600; }
-  .pill {
-    font-size: 9.5px; font-weight: 700; padding: 1px 5px; border-radius: 4px;
-    background: #fef3c7; color: #b45309; margin-left: 5px; vertical-align: 1px;
+
+  /* ---------- 行内期限结构图 ---------- */
+  .rchart { display: block; width: 100%; height: auto; overflow: visible; }
+  .rchart .grid { stroke: #f1f3f7; stroke-width: 1; }
+  .rchart .zero { stroke: #d0d5dd; stroke-width: 1; }
+  .rbar-pos { fill: var(--up); }
+  .rbar-neg { fill: var(--down); }
+  .rbar-base { fill: #98a2b3; }
+  .rbar-g:hover rect { opacity: .78; }
+  .rlabel { fill: #98a2b3; font-size: 8.5px; font-variant-numeric: tabular-nums; }
+  .rrate { font-size: 8.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .rrate.pos { fill: var(--up); }
+  .rrate.neg { fill: var(--down); }
+  .rrate.base { fill: #667085; }
+  .rrate.zero { fill: #98a2b3; }
+  .rarc { fill: none; stroke: #b4bcc9; stroke-width: 1; }
+  .rarc-label {
+    font-size: 8.5px; font-weight: 700;
+    paint-order: stroke; stroke: #fff; stroke-width: 2.4; stroke-linejoin: round;
+    font-variant-numeric: tabular-nums;
   }
-  .pill.ext-pill { background: #eef2ff; color: #3538cd; }
+  .rarc-label.pos { fill: var(--up); }
+  .rarc-label.neg { fill: var(--down); }
+  .rarc-label.zero { fill: #667085; }
+  .ropt { fill: #fff; stroke-width: 1.7; }
+  .ropt.rel { stroke: #3538cd; }
+  .ropt.abs { stroke: #d97706; }
+  tr.vrow.flash > td { background: #fff8e1 !important; transition: background .35s; }
+
 
   .foot { text-align: center; font-size: 11px; color: var(--ink3); line-height: 1.8; padding: 8px 0 18px; }
   .empty { padding: 42px; text-align: center; color: var(--ink3); }
@@ -260,7 +248,6 @@
     .btn { margin-left: 0; flex: 1; }
     .sel { flex: 1; }
     .card-head { padding: 11px 12px 0; }
-    .dbar .hint { display: none; }
     .chart { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   }
   @media (min-width: 1100px) {
@@ -271,7 +258,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>期货基差一览<span class="sub">每个品种找出 |基差率| 最大的合约，按矛盾大小筛选</span></h1>
+    <h1>期货基差一览<span class="sub">兼顾幅度与时间，同时给出相对最优与绝对最优基差合约</span></h1>
     <div class="meta">
       <span>更新 <b id="mUpdate">—</b></span>
       <span>最近交易日 <b id="mTrade">—</b></span>
@@ -289,13 +276,16 @@
       <option value="15">|基差率| ≥ 15%</option>
       <option value="20">|基差率| ≥ 20%</option>
     </select>
-    <span class="note">基差率：<b class="pos">红 = 贴水</b> · <b class="neg">绿 = 升水</b></span>
-    <button class="btn" id="toggleAll">全部展开</button>
+    <span class="note">基差率：<b class="pos">红 = 贴水</b> · <b class="neg">绿 = 升水</b> · 灰 = 交割月</span>
   </div>
 
   <div class="card">
     <div class="card-head">
-      <h2>基差矛盾排行</h2>
+      <h2>最优基差排行</h2>
+      <div class="seg" id="rankMode">
+        <button data-mode="rel" class="on">相对最优</button>
+        <button data-mode="abs">绝对最优</button>
+      </div>
       <div class="hint" id="chartHint"></div>
     </div>
     <div class="chart" id="chart"><div class="empty"><span class="spin"></span>正在加载数据…</div></div>
@@ -305,21 +295,21 @@
     <div class="table-wrap">
       <table class="ov">
         <colgroup>
-          <col style="width:14%">
-          <col style="width:15%">
-          <col style="width:13%">
+          <col style="width:10%">
+          <col style="width:12%">
+          <col style="width:12%">
+          <col style="width:10%">
           <col>
           <col style="width:5%">
-          <col style="width:38px">
         </colgroup>
         <thead>
           <tr>
             <th>品种</th>
-            <th>最大基差矛盾 <span class="th-note">|基差率| 最大 · 表格按矛盾降序</span></th>
-            <th>最新结算 / 交割价</th>
-            <th>后续合约基差率 <span class="th-note">蓝框 = 该品种最大矛盾 · 悬停看价格</span></th>
+            <th>相对最优 <span class="th-note"><i class="dot rel"></i>效率优先</span></th>
+            <th>绝对最优 <span class="th-note"><i class="dot abs"></i>|基差率| 最大</span></th>
+            <th>最新 / 交割价</th>
+            <th>期限结构 · 基差率 · 月差率 <span class="th-note">柱下 = 基差率 · 弧线 = 相邻价差率</span></th>
             <th class="num">合约</th>
-            <th></th>
           </tr>
         </thead>
         <tbody id="list">
@@ -331,7 +321,7 @@
 
   <div class="foot">
     基差 = 最近交割合约的最后交易日收盘价 − 合约最新收盘价；基差率 = 基差 ÷ 合约最新收盘价<br>
-    “最大基差矛盾”取每个品种中 |基差率| 最大的合约；价格为收盘价，不带千分位<br>
+    “相对最优” = 以现在为起点、排除最近月，后续合约中 |基差率|÷剩余月数 效率最高；“绝对最优” = |基差率| 最大；柱内蓝点 / 橙点分别对应两者；价格为收盘价，不带千分位<br>
     已剔除股指/国债、贵金属、强麦等无成交品种，以及成交量 &lt; 50 且持仓量 &lt; 200 的僵尸合约<br>
     数据来源：新浪财经期货 · GitHub Actions 每个交易日自动更新 · 仅供学习参考，不构成投资建议
   </div>
@@ -377,14 +367,39 @@ function shortName(name) {
   return s.length > 8 ? s.slice(0, 8) + "…" : s;
 }
 
-function maxContract(v) {
-  const chain = v.chain || [];
+function monthIndex(ym) {
+  return Math.floor(ym / 100) * 12 + (ym % 100);
+}
+
+// 最优基差月：以“现在”为时间起点，排除最近月 C1，
+// 在 C2 之后找 |基差率| ÷ 剩余月数 最大的合约。
+function optimalContract(v, nowMonth) {
+  const chain = (v.chain || []).filter(c => c.basis_rate != null && c.last != null);
+  if (!chain.length) return null;
+  const base = nowMonth == null ? monthIndex(chain[0].ym) : nowMonth;
+  if (chain.length < 2) return chain[0];
+  let best = null;
+  for (let i = 1; i < chain.length; i++) {
+    const c = chain[i];
+    const t = monthIndex(c.ym) - base;
+    if (t <= 0) continue;
+    const e = Math.abs(c.basis_rate) / t;
+    if (!best || e > best.e) best = { c, e };
+  }
+  return best ? best.c : chain[0];
+}
+
+function absContract(v) {
+  const chain = (v.chain || []).filter(c => c.basis_rate != null && c.last != null);
   let best = null;
   for (const c of chain) {
-    if (c.basis_rate == null) continue;
     if (!best || Math.abs(c.basis_rate) > Math.abs(best.basis_rate)) best = c;
   }
   return best;
+}
+
+function modeContract(v) {
+  return state.rankMode === "abs" ? v._abs : v._rel;
 }
 
 const state = {
@@ -392,7 +407,7 @@ const state = {
   ex: "",
   q: "",
   minRate: 0,
-  expanded: new Set(),
+  rankMode: "rel",
 };
 
 /* ============================== 加载 ============================== */
@@ -406,7 +421,14 @@ async function boot() {
       <span style="font-size:12px">请先运行 pipeline.py 生成 data/index.json</span></td></tr>`;
     return;
   }
-  for (const v of state.index.varieties) v._max = maxContract(v);
+  const nowM = (() => {
+    const m = /^(\d{4})-(\d{2})/.exec(state.index.latest_trade_date || "");
+    return m ? (Number(m[1]) % 100) * 12 + Number(m[2]) : null;
+  })();
+  for (const v of state.index.varieties) {
+    v._rel = optimalContract(v, nowM);
+    v._abs = absContract(v);
+  }
 
   $("mUpdate").textContent = state.index.update_time || "—";
   $("mTrade").textContent = state.index.latest_trade_date || "—";
@@ -416,14 +438,10 @@ async function boot() {
   renderList();
   renderChart();
 
-  // 支持 #RB 直接定位并展开
+  // 支持 #RB 直接定位
   const code = decodeURIComponent(location.hash.replace("#", "")).split("/")[0].toUpperCase();
   if (code && state.index.varieties.some(v => v.code === code)) {
-    state.expanded.add(code);
-    renderList();
-    renderChart();
-    const row = document.querySelector(`tr.vrow[data-code="${code}"]`);
-    if (row) requestAnimationFrame(() => row.scrollIntoView({ block: "center" }));
+    requestAnimationFrame(() => locate(code, false));
   }
 }
 
@@ -432,10 +450,11 @@ function filtered() {
   const q = state.q;
   return state.index.varieties.filter(v => {
     if (state.ex && v.exchange_short !== state.ex) return false;
-    if (state.minRate && (!v._max || Math.abs(v._max.basis_rate) < state.minRate)) return false;
+    const mc = modeContract(v);
+    if (state.minRate && (!mc || Math.abs(mc.basis_rate) < state.minRate)) return false;
     if (!q) return true;
-    const hay = (v.name + " " + v.code + " " + v.delivery_contract + " " +
-      (v._max ? v._max.code : "")).toLowerCase();
+    const codes = [v._rel && v._rel.code, v._abs && v._abs.code].filter(Boolean).join(" ");
+    const hay = (v.name + " " + v.code + " " + v.delivery_contract + " " + codes).toLowerCase();
     return hay.includes(q);
   });
 }
@@ -465,14 +484,17 @@ function renderTabs() {
 /* ============================== 顶部排行图 ============================== */
 function renderChart() {
   const box = $("chart");
-  const list = filtered().filter(v => v._max);
+  const list = filtered().filter(v => {
+    const m = modeContract(v);
+    return m && Math.abs(m.basis_rate) >= 5;
+  });
   if (!list.length) {
-    box.innerHTML = `<div class="empty">没有匹配的品种</div>`;
+    box.innerHTML = `<div class="empty">没有 |基差率| ≥ 5% 的品种</div>`;
     $("chartHint").textContent = "";
     return;
   }
 
-  const items = list.slice().sort((a, b) => a._max.basis_rate - b._max.basis_rate);
+  const items = list.slice().sort((a, b) => modeContract(a).basis_rate - modeContract(b).basis_rate);
   const viewportW = Math.max(box.clientWidth || 1100, 320);
   const isNarrow = viewportW < 700;
   // 手机上给每根柱子留出固定宽度, 让柱内代码和底部标签保持可读, 图表横向滚动
@@ -483,7 +505,7 @@ function renderChart() {
 
   let lo = 0, hi = 0;
   for (const v of items) {
-    const r = v._max.basis_rate;
+    const r = modeContract(v).basis_rate;
     if (r < lo) lo = r;
     if (r > hi) hi = r;
   }
@@ -532,7 +554,7 @@ function renderChart() {
 
   const labelEvery = Math.max(1, Math.ceil(items.length / Math.max(8, Math.floor(iw / 14))));
   items.forEach((v, i) => {
-    const m = v._max;
+    const m = modeContract(v);
     const rate = m.basis_rate;
     const x = X(i);
     const y = Y(rate);
@@ -551,11 +573,11 @@ function renderChart() {
     rect.addEventListener("click", () => locate(v.code));
     rect.addEventListener("mousemove", ev => {
       tip.innerHTML = `<div class="ctip-d">${esc(v.name)}<span>${esc(v.code)}</span></div>
-        <div class="ctip-r"><span>最大矛盾</span><b>${esc(m.code)} · ${fmtPct(rate)}</b></div>
+        <div class="ctip-r"><span>${state.rankMode === "abs" ? "绝对最优" : "相对最优"}</span><b>${esc(m.code)} · ${fmtPct(rate)}</b></div>
         <div class="ctip-r"><span>最新 / 交割</span><b>${fmtPrice(m.last)} / ${fmtPrice(v.delivery_price)}</b></div>
         <div class="ctip-r"><span>基差</span><b>${fmtSignedNum(m.basis)}</b></div>
         <div class="ctip-r"><span>交割月</span><b>${esc(m.month)}</b></div>
-        <div class="ctip-h">点击定位下方明细</div>`;
+        <div class="ctip-h">点击定位该品种</div>`;
       tip.classList.add("on");
       const br = box.getBoundingClientRect();
       let left = ev.clientX - br.left + 12;
@@ -607,169 +629,178 @@ function renderChart() {
   box.innerHTML = "";
   box.appendChild(svg);
   box.appendChild(tip);
-  $("chartHint").innerHTML = `当前 <b>${items.length}</b> 个品种 · 柱外侧小字 = 品种代码（红上绿下） · ` +
+  $("chartHint").innerHTML = `展示 <b>${items.length}</b> 个 |基差率| ≥ 5% 的品种 · ` +
+    `${state.rankMode === "abs" ? "绝对最优" : "相对最优"} · 柱外侧小字 = 品种代码（红上绿下） · ` +
     `<span class="lg-pos">红 = 正基差</span> / <span class="lg-neg">绿 = 负基差</span> · ` +
-    (isNarrow ? `左右滑动查看，点柱子定位明细` : `点击柱子定位明细`);
+    (isNarrow ? `左右滑动查看，点柱子定位该品种` : `点击柱子定位该品种`);
 }
 
 /* ============================== 列表 ============================== */
 function summaryRow(v) {
   const chain = v.chain || [];
-  const m = v._max;
-  const chips = chain.map(c => {
-    const cls = c.basis_rate > 0 ? "pos" : c.basis_rate < 0 ? "neg" : "";
-    const isMax = m && c.code === m.code;
-    return `<span class="chip ${cls}${isMax ? " max" : ""}" title="${esc(c.code)} · 最新 ${fmtPrice(c.last)} · 基差 ${fmtSignedNum(c.basis)}">
-      <em>${esc(c.code.slice(v.code.length))}</em><b>${fmtPct(c.basis_rate)}</b></span>`;
-  }).join("");
+  const rel = v._rel, abs = v._abs;
 
-  const maxHtml = m ? `<div class="mx-code">${esc(m.code)}<span class="mx-month">${esc(m.month)}</span></div>
-      <div class="mx-rate ${clsBasis(m.basis_rate)}">${fmtPct(m.basis_rate)}</div>
-      <div class="mx-sub">基差 ${fmtSignedNum(m.basis)}</div>`
-    : `<span style="color:var(--ink3)">—</span>`;
+  const optHtml = (c, kind) => {
+    if (!c) return `<span style="color:var(--ink3)">—</span>`;
+    return `<div class="opt-line"><i class="dot ${kind}"></i>
+        <span class="opt-code">${esc(c.code)}</span>
+        <b class="${clsBasis(c.basis_rate)}">${fmtPct(c.basis_rate)}</b></div>
+      <div class="opt-sub">基差 ${fmtSignedNum(c.basis)}</div>`;
+  };
 
-  const priceHtml = m ? `<div class="px-row"><span>最新</span><b>${fmtPrice(m.last)}</b></div>
-      <div class="px-row"><span>交割</span><b>${fmtPrice(v.delivery_price)}</b></div>
-      <div class="px-sub">${esc(v.delivery_contract)} · ${esc((v.delivery_date || "").slice(5))}</div>`
-    : `<span style="color:var(--ink3)">—</span>`;
+  const priceHtml = `<div class="px-row"><span>相对</span><b>${rel ? fmtPrice(rel.last) : "—"}</b></div>
+      <div class="px-row"><span>绝对</span><b>${abs ? fmtPrice(abs.last) : "—"}</b></div>
+      <div class="px-row"><span>交割</span><b>${fmtPrice(v.delivery_price)}</b></div>`;
 
-  return `<tr class="vrow" data-code="${esc(v.code)}" tabindex="0" role="button" aria-expanded="false">
+  return `<tr class="vrow" data-code="${esc(v.code)}" tabindex="0">
     <td>
       <span class="vname">${esc(v.name)}</span><span class="vcode">${esc(v.code)}</span>
       <span class="ex">${esc(v.exchange_short)}</span>
     </td>
-    <td>${maxHtml}</td>
+    <td>${optHtml(rel, "rel")}</td>
+    <td>${optHtml(abs, "abs")}</td>
     <td>${priceHtml}</td>
-    <td><div class="chain">${chips || '<span style="color:var(--ink3)">—</span>'}</div></td>
+    <td>${rowChart(v)}</td>
     <td class="num">${chain.length}</td>
-    <td class="chev-cell"><span class="chev">›</span></td>
-  </tr>
-  <tr class="drow" data-code="${esc(v.code)}"><td colspan="6"><div class="detail"></div></td></tr>`;
+  </tr>`;
 }
 
-function detailHtml(v) {
-  const chain = v.chain || [];
-  const m = v._max;
-  const maxOi = Math.max(0, ...chain.map(c => c.position || 0));
-  const rows = chain.map(c => {
-    const main = maxOi > 0 && c.position === maxOi;
-    const ext = m && c.code === m.code;
-    return `<tr class="${main ? "main" : ""}${ext ? " ext" : ""}">
-      <td class="c">${esc(c.code)}${main ? '<span class="pill">主力</span>' : ""}${ext ? '<span class="pill ext-pill">最大矛盾</span>' : ""}</td>
-      <td class="m">${esc(c.month)}</td>
-      <td class="c">${fmtPrice(c.last)}</td>
-      <td class="${clsChg(c.chg)}">${fmtSignedNum(c.chg)}</td>
-      <td class="${clsChg(c.chg_pct)}">${fmtPct(c.chg_pct)}</td>
-      <td class="${clsBasis(c.basis)}">${fmtSignedNum(c.basis)}</td>
-      <td class="${clsBasis(c.basis_rate)}">${fmtPct(c.basis_rate)}</td>
-      <td>${fmtInt(c.volume)}</td>
-      <td>${fmtInt(c.position)}</td>
-    </tr>`;
-  }).join("");
+/* 期限结构图：交割月 + 后续合约。
+   柱高 = 收盘价；柱内竖排 = 基差率；柱间弧线 = 相邻合约价差率。
+   价差 = 近月收盘 − 远月收盘；价差率 = 价差 ÷ 远月收盘（与基差同口径）。 */
+function shortCode(code, prefix) {
+  const s = String(code || "");
+  return s.startsWith(prefix) ? s.slice(prefix.length) : s;
+}
 
-  return `<div class="dbar">
-      <span class="tag">基准交割</span>
-      <span>合约 <b>${esc(v.delivery_contract)}</b></span>
-      <span>最后交易日 <b>${esc(v.delivery_date || "—")}</b></span>
-      <span>交割价 <b>${fmtPrice(v.delivery_price)}</b></span>
-      <span>后续合约 <b>${chain.length}</b> 个</span>
-      <span class="hint">基差 = 交割价 − 合约最新收盘价 · 蓝底 = 最大矛盾合约</span>
-    </div>
-    <table class="ct">
-      <thead><tr>
-        <th>合约</th><th>交割月</th><th>最新结算</th><th>涨跌</th><th>涨跌幅</th>
-        <th>基差</th><th>基差率</th><th>成交量</th><th>持仓量</th>
-      </tr></thead>
-      <tbody>${rows || '<tr><td colspan="9" class="empty">暂无合约数据</td></tr>'}</tbody>
-    </table>`;
+function termBars(v) {
+  const bars = [{
+    code: v.delivery_contract || "交割",
+    price: v.delivery_price,
+    basis: null,
+    rate: null,
+    isBase: true,
+  }];
+  for (const c of (v.chain || [])) {
+    bars.push({
+      code: c.code,
+      price: c.last,
+      basis: c.basis,
+      rate: c.basis_rate,
+      isBase: false,
+    });
+  }
+  return bars;
+}
+
+function rowChart(v) {
+  const bars = termBars(v);
+  const prices = bars.map(b => b.price).filter(p => p != null && p > 0);
+  const n = bars.length;
+  if (!n || !prices.length) return "";
+  const pmin = Math.min(...prices), pmax = Math.max(...prices);
+  let range = pmax - pmin;
+  if (range < pmax * 0.01) range = pmax * 0.01;
+  const yMin = pmin - range * 0.35;
+  const yMax = pmax + range * 0.5;
+  const W = 640, H = 116;
+  const pl = 38, pr = 8, pt = 20, pb = 28;
+  const iw = W - pl - pr, ih = H - pt - pb;
+  const y = p => pt + (yMax - p) / (yMax - yMin) * ih;
+  const baseY = pt + ih;
+  const step = iw / n;
+  const bw = Math.max(6, Math.min(26, step * 0.52));
+
+  let grid = "";
+  for (let t = 0; t <= 2; t++) {
+    const val = pmax - (pmax - pmin) * t / 2;
+    const yy = y(val);
+    grid += `<line class="grid" x1="${pl}" y1="${yy}" x2="${W - pr}" y2="${yy}"></line>` +
+      `<text class="rlabel" x="${pl - 5}" y="${yy + 2.5}" text-anchor="end">${fmtPrice(Math.round(val))}</text>`;
+  }
+
+  let out = "";
+  let relMark = null, absMark = null;
+  bars.forEach((b, i) => {
+    const cx = pl + step * (i + 0.5);
+    const code = shortCode(b.code, v.code);
+    out += `<text class="rlabel" x="${cx}" y="${H - 17}" text-anchor="middle">${esc(code)}</text>`;
+    if (b.price == null || b.price <= 0) return;
+    const top = y(b.price);
+    const h = Math.max(baseY - top, 1);
+    const cls = b.isBase ? "rbar-base" : (b.rate > 0 ? "rbar-pos" : b.rate < 0 ? "rbar-neg" : "rbar-base");
+    const tip = b.isBase
+      ? `交割月 ${b.code} · ${fmtPrice(b.price)}`
+      : `${b.code} · 收盘 ${fmtPrice(b.price)}\n基差 ${fmtSignedNum(b.basis)} · 基差率 ${fmtPct(b.rate)}`;
+    out += `<g class="rbar-g"><title>${esc(tip)}</title>` +
+      `<rect class="${cls}" x="${cx - bw / 2}" y="${top}" width="${bw}" height="${h}" rx="1.5"></rect></g>`;
+    if (!b.isBase) {
+      if (v._rel && b.code === v._rel.code) relMark = { x: cx, y: top + 5 };
+      if (v._abs && b.code === v._abs.code) absMark = { x: cx, y: top + 5 };
+    }
+    const rc = b.isBase ? "base" : (b.rate > 0 ? "pos" : b.rate < 0 ? "neg" : "zero");
+    out += `<text class="rrate ${rc}" x="${cx}" y="${H - 4}" text-anchor="middle">${esc(b.isBase ? "基准" : fmtPct(b.rate))}</text>`;
+  });
+
+  // 弧线覆盖所有相邻柱，包括 交割月 -> 最近月
+  for (let i = 0; i < n - 1; i++) {
+    const a = bars[i], b = bars[i + 1];
+    if (a.price == null || b.price == null || !a.price || !b.price) continue;
+    const x1 = pl + step * (i + 0.5), y1 = y(a.price);
+    const x2 = pl + step * (i + 1.5), y2 = y(b.price);
+    const mx = (x1 + x2) / 2;
+    const my = Math.min(y1, y2) - 9;
+    const spread = Math.round((a.price - b.price) * 100) / 100;
+    const rate = Math.round(spread / b.price * 10000) / 100;
+    const apexY = (y1 + 2 * my + y2) / 4;
+    const cls = rate > 0 ? "pos" : rate < 0 ? "neg" : "zero";
+    const tip = `${a.code} ${fmtPrice(a.price)} -> ${b.code} ${fmtPrice(b.price)}` +
+      `\n价差 ${fmtSignedNum(spread)} · 价差率 ${fmtPct(rate)}`;
+    out += `<g><title>${esc(tip)}</title>` +
+      `<path class="rarc" d="M${x1} ${y1} Q${mx} ${my} ${x2} ${y2}"></path>` +
+      `<text class="rarc-label ${cls}" x="${mx}" y="${apexY - 2.5}" text-anchor="middle">${fmtPct(rate)}</text>` +
+      `</g>`;
+  }
+
+  const both = relMark && absMark && relMark.x === absMark.x;
+  if (relMark) {
+    out += `<circle class="ropt rel" cx="${relMark.x + (both ? -3.2 : 0)}" cy="${relMark.y}" r="2.7">` +
+      `<title>相对最优</title></circle>`;
+  }
+  if (absMark) {
+    out += `<circle class="ropt abs" cx="${absMark.x + (both ? 3.2 : 0)}" cy="${absMark.y}" r="2.7">` +
+      `<title>绝对最优</title></circle>`;
+  }
+
+  return `<svg class="rchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="期限结构、基差率与相邻价差率">
+    ${grid}<line class="zero" x1="${pl}" y1="${baseY}" x2="${W - pr}" y2="${baseY}"></line>${out}</svg>`;
 }
 
 function renderList() {
-  // 默认按“最大矛盾”从大到小，直接筛出最值得看的品种
+  // 默认按“最优基差率”绝对值从大到小
   const list = filtered().slice().sort((a, b) => {
-    const x = a._max ? Math.abs(a._max.basis_rate) : -1;
-    const y = b._max ? Math.abs(b._max.basis_rate) : -1;
+    const x = modeContract(a) ? Math.abs(modeContract(a).basis_rate) : -1;
+    const y = modeContract(b) ? Math.abs(modeContract(b).basis_rate) : -1;
     return y - x;
   });
 
   if (!list.length) {
     $("list").innerHTML = `<tr><td colspan="6" class="empty">没有匹配的品种</td></tr>`;
-    updateToggleLabel();
     return;
   }
   $("list").innerHTML = list.map(summaryRow).join("");
-
-  // 恢复展开状态
-  for (const v of list) {
-    if (state.expanded.has(v.code)) applyOpen(v.code, true, false);
-  }
-  updateToggleLabel();
 }
 
-function applyOpen(code, open, setHash = true) {
+function locate(code, scroll = true) {
   const row = document.querySelector(`tr.vrow[data-code="${code}"]`);
-  const drow = document.querySelector(`tr.drow[data-code="${code}"]`);
-  if (!row || !drow) return;
-
-  row.classList.toggle("open", open);
-  row.setAttribute("aria-expanded", open);
-  drow.classList.toggle("open", open);
-
-  if (open) {
-    const box = drow.querySelector(".detail");
-    if (!box.dataset.rendered) {
-      const v = state.index.varieties.find(x => x.code === code);
-      if (v) {
-        box.innerHTML = detailHtml(v);
-        box.dataset.rendered = "1";
-      }
-    }
-    if (setHash) history.replaceState(null, "", "#" + code);
-  } else if (setHash) {
-    const h = location.hash.replace("#", "").split("/")[0];
-    if (!h || h.toUpperCase() === code) {
-      history.replaceState(null, "", location.pathname + location.search);
-    }
-  }
-}
-
-function toggle(code) {
-  const open = !state.expanded.has(code);
-  if (open) state.expanded.add(code); else state.expanded.delete(code);
-  applyOpen(code, open);
-  updateToggleLabel();
-}
-
-function locate(code) {
-  state.expanded.add(code);
-  renderList();
-  const row = document.querySelector(`tr.vrow[data-code="${code}"]`);
-  if (row) {
-    row.scrollIntoView({ block: "center", behavior: "smooth" });
-    applyOpen(code, true, true);
-  }
-}
-
-function updateToggleLabel() {
-  const list = filtered();
-  const allOpen = list.length > 0 && list.every(v => state.expanded.has(v.code));
-  $("toggleAll").textContent = allOpen ? "全部收起" : "全部展开";
+  if (!row) return;
+  if (scroll !== false) row.scrollIntoView({ block: "center", behavior: "smooth" });
+  row.classList.add("flash");
+  setTimeout(() => row.classList.remove("flash"), 1200);
+  history.replaceState(null, "", "#" + code);
 }
 
 /* ============================== 交互 ============================== */
-$("list").addEventListener("click", e => {
-  const row = e.target.closest("tr.vrow");
-  if (row) toggle(row.dataset.code);
-});
-
-$("list").addEventListener("keydown", e => {
-  if (e.key !== "Enter" && e.key !== " ") return;
-  const row = e.target.closest("tr.vrow");
-  if (!row) return;
-  e.preventDefault();
-  toggle(row.dataset.code);
-});
-
 let searchTimer = null;
 $("search").addEventListener("input", e => {
   const q = e.target.value.trim().toLowerCase();
@@ -787,17 +818,13 @@ $("minRate").addEventListener("change", e => {
   renderChart();
 });
 
-$("toggleAll").addEventListener("click", () => {
-  const list = filtered();
-  if (!list.length) return;
-  const allOpen = list.every(v => state.expanded.has(v.code));
-  for (const v of list) {
-    if (allOpen) state.expanded.delete(v.code);
-    else state.expanded.add(v.code);
-  }
-  for (const v of list) applyOpen(v.code, !allOpen, false);
-  updateToggleLabel();
-  if (!allOpen) history.replaceState(null, "", location.pathname + location.search);
+$("rankMode").addEventListener("click", e => {
+  const b = e.target.closest("button[data-mode]");
+  if (!b) return;
+  state.rankMode = b.dataset.mode;
+  $("rankMode").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  renderList();
+  renderChart();
 });
 
 let rt = null;
@@ -811,10 +838,7 @@ window.addEventListener("hashchange", () => {
   const code = decodeURIComponent(location.hash.replace("#", "")).split("/")[0].toUpperCase();
   if (!code) return;
   if (!state.index.varieties.some(v => v.code === code)) return;
-  state.expanded.add(code);
-  renderList();
-  const row = document.querySelector(`tr.vrow[data-code="${code}"]`);
-  if (row) row.scrollIntoView({ block: "center" });
+  locate(code);
 });
 
 boot();
