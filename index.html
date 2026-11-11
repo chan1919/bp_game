@@ -202,6 +202,10 @@
   .rchart { display: block; width: 100%; height: auto; overflow: visible; }
   .rchart .grid { stroke: #f1f3f7; stroke-width: 1; }
   .rchart .zero { stroke: #d0d5dd; stroke-width: 1; }
+  .rprice {
+    fill: #101828; font-weight: 700; pointer-events: none;
+    paint-order: stroke; stroke: #fff; stroke-width: .7; stroke-linejoin: round;
+  }
   .rbar-pos { fill: var(--up); }
   .rbar-neg { fill: var(--down); }
   .rbar-base { fill: #98a2b3; }
@@ -733,7 +737,16 @@ function rowChart(v) {
       ? `交割月 ${b.code} · ${fmtPrice(b.price)}`
       : `${b.code} · 收盘 ${fmtPrice(b.price)}\n基差 ${fmtSignedNum(b.basis)} · 基差率 ${fmtPct(b.rate)}`;
     out += `<g class="rbar-g"><title>${esc(tip)}</title>` +
-      `<rect class="${cls}" x="${cx - bw / 2}" y="${top}" width="${bw}" height="${h}" rx="1.5"></rect></g>`;
+      `<rect class="${cls}" x="${cx - bw / 2}" y="${top}" width="${bw}" height="${h}" rx="1.5"></rect>`;
+    // 柱子内部写价格, 黑色小字; 按柱子宽度自动缩小, 避免超出
+    const priceText = String(Math.round(b.price));
+    const maxTextW = bw - 2.5;
+    const priceFs = Math.max(4.5, Math.min(7, maxTextW / (priceText.length * 0.62)));
+    if (h >= 9) {
+      const ty = top + h - 2;
+      out += `<text class="rprice" x="${cx}" y="${ty}" text-anchor="middle" font-size="${priceFs.toFixed(1)}">${esc(priceText)}</text>`;
+    }
+    out += `</g>`;
     if (!b.isBase) {
       if (v._rel && b.code === v._rel.code) relMark = { x: cx, y: top + 5 };
       if (v._abs && b.code === v._abs.code) absMark = { x: cx, y: top + 5 };
