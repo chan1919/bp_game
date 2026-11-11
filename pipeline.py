@@ -226,7 +226,8 @@ def ym_label(ym):
 
 
 def today_ym(now):
-    return now.year * 100 + now.month
+    # 与 ym_of() 保持同一口径: YYMM (如 2611), 不是 YYYYMM
+    return (now.year % 100) * 100 + now.month
 
 
 def num(v, nd=2):
