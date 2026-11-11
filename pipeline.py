@@ -38,6 +38,7 @@ CN_TZ = timezone(timedelta(hours=8))
 OUT_DIR = "data"
 WINDOW_DAYS = 365          # 展示窗口: 近 1 年
 MAX_MONTHS_BACK = 30       # 往前试探交割合约的最大月数
+MAX_FORWARD_MONTHS = 24    # 挂牌接口异常时, 往后补全合约的最大月数
 MIN_LIVE = 3               # 后续活跃合约太少则不展示
 MIN_BARS = 20              # 时间轴太短则不展示
 MIN_VOLUME = 50            # 单合约日成交量低于此值 ...
@@ -215,6 +216,11 @@ def ym_prev(ym):
     return (y - 1) * 100 + 12 if m == 1 else y * 100 + (m - 1)
 
 
+def ym_next(ym):
+    y, m = divmod(ym, 100)
+    return (y + 1) * 100 + 1 if m == 12 else y * 100 + (m + 1)
+
+
 def ym_label(ym):
     return "%04d-%02d" % (2000 + ym // 100, ym % 100)
 
@@ -256,6 +262,8 @@ def build_variety(v, latest_date, now, log):
     if prefix in INE_PREFIX:
         v = dict(v, ex="ine", exchange=INE_NAME, exchange_short="上期能源")
 
+    cur_ym = today_ym(now)
+
     contracts = {}
     for x in rows:
         sym = (x.get("symbol") or "").strip().upper()
@@ -265,13 +273,27 @@ def build_variety(v, latest_date, now, log):
         if not ym or ym in (0, 1):
             continue
         contracts[sym] = {"code": sym, "ym": ym, "month": ym_label(ym)}
+
+    # 挂牌列表异常时 (只剩连续合约 + 老合约), 用日线接口按月补全当前/后续合约
+    max_listed = max((c["ym"] for c in contracts.values()), default=0)
+    if max_listed < cur_ym:
+        log("%s %-8s 合约列表异常, 用日线补全" % (prefix, v["name"]))
+        ym = cur_ym
+        for _ in range(MAX_FORWARD_MONTHS):
+            sym = contract_code(prefix, ym)
+            bars = fetch_kline(sym)
+            if bars:
+                contracts[sym] = {"code": sym, "ym": ym, "month": ym_label(ym),
+                                  "bars": bars}
+            ym = ym_next(ym)
+
     if len(contracts) < MIN_LIVE:
         log("%s %-8s 合约太少(%d)" % (prefix, v["name"], len(contracts)))
         return None, None
 
-    # ---- 找最近已交割合约: 从最小月份往前逐月试探 ----
-    first_ym = min(c["ym"] for c in contracts.values())
-    cur_ym = today_ym(now)
+    # ---- 找最近已交割合约: 从当前月 (或最小挂牌月) 往前逐月试探 ----
+    # 不能从挂牌列表的最小月份开始: 列表里可能混着多年前的老合约
+    first_ym = max(min(c["ym"] for c in contracts.values()), cur_ym)
     delivery = None
     ym = first_ym
     for _ in range(MAX_MONTHS_BACK):
@@ -325,7 +347,9 @@ def build_variety(v, latest_date, now, log):
 
     series, dates = [], set()
     for c in live:
-        bars = fetch_kline(c["code"])
+        bars = c.get("bars")
+        if bars is None:
+            bars = fetch_kline(c["code"])
         if not bars:
             continue
         px = {}
