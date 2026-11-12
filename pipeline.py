@@ -242,6 +242,52 @@ def contract_code(prefix, ym):
     return "%s%02d%02d" % (prefix, ym // 100 % 100, ym % 100)
 
 
+def merge_quote_bar(bars, q):
+    """日线还没更新到最新交易日时, 用实时快照补上最后一根 K 线.
+    收盘后快照里的 close 就是当日收盘价, 避免 15:xx 跑批拿到昨天的日线."""
+    if not q:
+        return bars
+    qd = (q.get("tradedate") or "").strip()
+    qc = num(q.get("close")) or num(q.get("trade"))
+    if not qd or not qc:
+        return bars
+    last_d = (bars[-1].get("d") or "") if bars else ""
+    if last_d >= qd:
+        return bars
+    return bars + [{
+        "d": qd,
+        "o": num(q.get("open")),
+        "h": num(q.get("high")),
+        "l": num(q.get("low")),
+        "c": qc,
+        "s": num(q.get("settlement")),
+        "v": int(float(q.get("volume") or 0)),
+        "p": int(float(q.get("position") or 0)),
+    }]
+
+
+def is_expired(ym, cur_ym, last_date, latest_date, pos):
+    """合约是否已经交割.
+    关键: 未来月份(ym > cur_ym)绝不可能是交割合约 -- 否则日线晚一天时,
+    会把下月合约误判成交割价, 后面的合约阶梯就整体错位了."""
+    if ym < cur_ym:
+        return True
+    if ym > cur_ym:
+        return False
+    if pos == 0:
+        return True
+    # 当月合约: 只有明显落后于最新交易日(>3 个自然日)才视为已交割,
+    # 当天日线还没更新(差 1 天)不能算.
+    if last_date and latest_date:
+        try:
+            gap = (datetime.strptime(latest_date, "%Y-%m-%d")
+                   - datetime.strptime(last_date, "%Y-%m-%d")).days
+            return gap > 3
+        except ValueError:
+            return last_date < latest_date
+    return False
+
+
 # ---------------- 单品种 ----------------
 def build_variety(v, latest_date, now, log):
     rows = fetch_active_contracts(v["mark"])
@@ -265,6 +311,7 @@ def build_variety(v, latest_date, now, log):
 
     cur_ym = today_ym(now)
 
+    quotes_by_sym = {}
     contracts = {}
     for x in rows:
         sym = (x.get("symbol") or "").strip().upper()
@@ -273,6 +320,7 @@ def build_variety(v, latest_date, now, log):
         ym = ym_of(sym)
         if not ym or ym in (0, 1):
             continue
+        quotes_by_sym[sym] = x
         contracts[sym] = {"code": sym, "ym": ym, "month": ym_label(ym)}
 
     # 挂牌列表异常时 (只剩连续合约 + 老合约), 用日线接口按月补全当前/后续合约
@@ -299,14 +347,12 @@ def build_variety(v, latest_date, now, log):
     ym = first_ym
     for _ in range(MAX_MONTHS_BACK):
         sym = contract_code(prefix, ym)
-        bars = fetch_kline(sym)
+        bars = merge_quote_bar(fetch_kline(sym), quotes_by_sym.get(sym))
         if bars:
             last = bars[-1]
             last_date = last.get("d") or ""
             pos = num(last.get("p"), 0) or 0
-            # 已交割: 最后一根日线早于全市场最新交易日, 或持仓已归零
-            expired = bool(last_date and latest_date and last_date < latest_date) \
-                or (pos == 0 and ym <= cur_ym)
+            expired = is_expired(ym, cur_ym, last_date, latest_date, pos)
             if expired:
                 # 新浪对已交割合约会追加 p=0 的占位行(价格异常),
                 # 取最后一个仍有持仓的交易日作为"最后交易日"
@@ -351,6 +397,7 @@ def build_variety(v, latest_date, now, log):
         bars = c.get("bars")
         if bars is None:
             bars = fetch_kline(c["code"])
+        bars = merge_quote_bar(bars, quotes_by_sym.get(c["code"]))
         if not bars:
             continue
         px = {}
