@@ -376,10 +376,13 @@ function monthIndex(ym) {
 }
 
 // 相对最优：以“现在”为时间起点，排除最近月 C1。
-// 先找「平均效率 = |基差率| ÷ 剩余月数」最高的合约；
-// 再在效率 >= 80% × 最高效率、且方向相同的合约里，
-// 取 |基差率| 最大（持有时间最长、总幅度最大）的那个。
-const OPT_TOLERANCE = 0.8;
+// 目标：总基差幅度最大，但每多持有一个月要扣掉一份时间成本。
+// 时间成本 = min(22% × 最高月效率, 4 个百分点/月)：
+//   - 曲线平缓时，成本跟着最优月效率走，不会为了多拿一点基差拖太久；
+//   - 高基差品种封顶 4%/月，避免把最远月当成最优。
+// 方向与最近月一致，不因远月基差翻正/翻负而反向。
+const OPT_TIME_COST = 0.22;
+const OPT_TIME_COST_CAP = 4.0;
 
 function optimalContract(v, nowMonth) {
   const chain = (v.chain || []).filter(c => c.basis_rate != null && c.last != null);
@@ -398,14 +401,17 @@ function optimalContract(v, nowMonth) {
 
   let top = cands[0];
   for (const x of cands) if (x.e > top.e) top = x;
+  const lam = Math.min(OPT_TIME_COST * top.e, OPT_TIME_COST_CAP);
 
   const dir = top.c.basis_rate >= 0 ? 1 : -1;
-  const floor = top.e * OPT_TOLERANCE;
-  let pick = top;
-  for (const x of cands) {
-    const sameDir = (x.c.basis_rate >= 0 ? 1 : -1) === dir;
-    if (!sameDir || x.e < floor) continue;
-    if (Math.abs(x.c.basis_rate) > Math.abs(pick.c.basis_rate)) pick = x;
+  let pool = cands.filter(x => (x.c.basis_rate >= 0 ? 1 : -1) === dir);
+  if (!pool.length) pool = cands;
+
+  let pick = pool[0];
+  let bestScore = Math.abs(pick.c.basis_rate) - lam * pick.t;
+  for (const x of pool) {
+    const score = Math.abs(x.c.basis_rate) - lam * x.t;
+    if (score > bestScore) { pick = x; bestScore = score; }
   }
   return pick.c;
 }
