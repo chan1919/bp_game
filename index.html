@@ -203,8 +203,8 @@
   .rchart .grid { stroke: #f1f3f7; stroke-width: 1; }
   .rchart .zero { stroke: #d0d5dd; stroke-width: 1; }
   .rprice {
-    fill: #101828; font-weight: 700; pointer-events: none;
-    paint-order: stroke; stroke: #fff; stroke-width: .7; stroke-linejoin: round;
+    fill: #101828; font-weight: 400; pointer-events: none;
+    font-variant-numeric: tabular-nums;
   }
   .rbar-pos { fill: var(--up); }
   .rbar-neg { fill: var(--down); }
@@ -375,22 +375,39 @@ function monthIndex(ym) {
   return Math.floor(ym / 100) * 12 + (ym % 100);
 }
 
-// 最优基差月：以“现在”为时间起点，排除最近月 C1，
-// 在 C2 之后找 |基差率| ÷ 剩余月数 最大的合约。
+// 相对最优：以“现在”为时间起点，排除最近月 C1。
+// 先找「平均效率 = |基差率| ÷ 剩余月数」最高的合约；
+// 再在效率 >= 80% × 最高效率、且方向相同的合约里，
+// 取 |基差率| 最大（持有时间最长、总幅度最大）的那个。
+const OPT_TOLERANCE = 0.8;
+
 function optimalContract(v, nowMonth) {
   const chain = (v.chain || []).filter(c => c.basis_rate != null && c.last != null);
   if (!chain.length) return null;
   const base = nowMonth == null ? monthIndex(chain[0].ym) : nowMonth;
   if (chain.length < 2) return chain[0];
-  let best = null;
+
+  const cands = [];
   for (let i = 1; i < chain.length; i++) {
     const c = chain[i];
     const t = monthIndex(c.ym) - base;
     if (t <= 0) continue;
-    const e = Math.abs(c.basis_rate) / t;
-    if (!best || e > best.e) best = { c, e };
+    cands.push({ c, t, e: Math.abs(c.basis_rate) / t });
   }
-  return best ? best.c : chain[0];
+  if (!cands.length) return chain[0];
+
+  let top = cands[0];
+  for (const x of cands) if (x.e > top.e) top = x;
+
+  const dir = top.c.basis_rate >= 0 ? 1 : -1;
+  const floor = top.e * OPT_TOLERANCE;
+  let pick = top;
+  for (const x of cands) {
+    const sameDir = (x.c.basis_rate >= 0 ? 1 : -1) === dir;
+    if (!sameDir || x.e < floor) continue;
+    if (Math.abs(x.c.basis_rate) > Math.abs(pick.c.basis_rate)) pick = x;
+  }
+  return pick.c;
 }
 
 function absContract(v) {
