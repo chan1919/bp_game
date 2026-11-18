@@ -266,18 +266,23 @@ def merge_quote_bar(bars, q):
     }]
 
 
-def is_expired(ym, cur_ym, last_date, latest_date, pos):
+def is_expired(ym, cur_ym, last_date, latest_date, pos, listed):
     """合约是否已经交割.
     关键: 未来月份(ym > cur_ym)绝不可能是交割合约 -- 否则日线晚一天时,
-    会把下月合约误判成交割价, 后面的合约阶梯就整体错位了."""
+    会把下月合约误判成交割价, 后面的合约阶梯就整体错位了.
+    listed=False 表示它已经不在当前挂牌列表里; 对当月合约来说这是很强的
+    已交割信号(例如 11 月中的 BU2611), 不能只靠"落后 3 天"来判断."""
     if ym < cur_ym:
         return True
     if ym > cur_ym:
         return False
     if pos == 0:
         return True
-    # 当月合约: 只有明显落后于最新交易日(>3 个自然日)才视为已交割,
-    # 当天日线还没更新(差 1 天)不能算.
+    if not listed:
+        # 已从挂牌列表消失, 且最后一根日线不晚于全市场最新交易日 -> 已交割
+        return bool(last_date and latest_date and last_date <= latest_date)
+    # 当月合约仍在挂牌: 只有明显落后于最新交易日(>3 个自然日)才视为已交割,
+    # 当天/前一天日线还没更新不能算.
     if last_date and latest_date:
         try:
             gap = (datetime.strptime(latest_date, "%Y-%m-%d")
@@ -340,9 +345,10 @@ def build_variety(v, latest_date, now, log):
         log("%s %-8s 合约太少(%d)" % (prefix, v["name"], len(contracts)))
         return None, None
 
-    # ---- 找最近已交割合约: 从当前月 (或最小挂牌月) 往前逐月试探 ----
-    # 不能从挂牌列表的最小月份开始: 列表里可能混着多年前的老合约
-    first_ym = max(min(c["ym"] for c in contracts.values()), cur_ym)
+    # ---- 找最近已交割合约: 从当前月往前逐月试探 ----
+    # 不能从挂牌列表的最小月份开始: 列表里可能混着多年前的老合约;
+    # 也不能直接跳过当前月, 因为当前月可能已经交割 (如 11 月中的 BU2611).
+    first_ym = cur_ym
     delivery = None
     ym = first_ym
     for _ in range(MAX_MONTHS_BACK):
@@ -352,7 +358,8 @@ def build_variety(v, latest_date, now, log):
             last = bars[-1]
             last_date = last.get("d") or ""
             pos = num(last.get("p"), 0) or 0
-            expired = is_expired(ym, cur_ym, last_date, latest_date, pos)
+            listed = sym in contracts
+            expired = is_expired(ym, cur_ym, last_date, latest_date, pos, listed)
             if expired:
                 # 新浪对已交割合约会追加 p=0 的占位行(价格异常),
                 # 取最后一个仍有持仓的交易日作为"最后交易日"
