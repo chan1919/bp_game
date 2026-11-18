@@ -41,8 +41,6 @@ MAX_MONTHS_BACK = 30       # 往前试探交割合约的最大月数
 MAX_FORWARD_MONTHS = 24    # 挂牌接口异常时, 往后补全合约的最大月数
 MIN_LIVE = 3               # 后续活跃合约太少则不展示
 MIN_BARS = 20              # 时间轴太短则不展示
-MIN_VOLUME = 50            # 单合约日成交量低于此值 ...
-MIN_POSITION = 200         # ... 且持仓量也低于此值, 视为僵尸合约剔除
 WORKERS = 8
 TIMEOUT = 15
 RETRY = 3
@@ -447,17 +445,13 @@ def build_variety(v, latest_date, now, log):
         log("%s %-8s 有效合约太少(%d)" % (prefix, v["name"], len(series)))
         return None, None
 
-    # 剔除僵尸合约: 成交量和持仓量同时很低才剔除,
-    # 避免误伤持仓大但当天成交少的远月套保合约
-    liquid = [c for c in series
-              if c["volume"] >= MIN_VOLUME or c["position"] >= MIN_POSITION]
-    if len(liquid) < MIN_LIVE:
-        log("%s %-8s 活跃合约太少(%d)" % (prefix, v["name"], len(liquid)))
+    # 只按品种剔除完全没有成交的死品种, 不再过滤品种内部的单个合约。
+    # 否则可能把最近交割月或低成交但仍在挂牌的合约误删, 导致基准错月。
+    total_vol = sum(c["volume"] for c in series)
+    total_pos = sum(c["position"] for c in series)
+    if total_vol <= 0 and total_pos <= 0:
+        log("%s %-8s 全品种无成交, 剔除" % (prefix, v["name"]))
         return None, None
-    if len(liquid) < len(series):
-        log("%s %-8s 剔除僵尸合约 %d 个" % (
-            prefix, v["name"], len(series) - len(liquid)))
-        series = liquid
 
     axis = sorted(dates)
     if len(axis) < MIN_BARS:
