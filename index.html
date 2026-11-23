@@ -151,7 +151,7 @@
   /* ---------- table ---------- */
   .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   table.ov {
-    width: 100%; min-width: 1120px; border-collapse: collapse;
+    width: 100%; min-width: 1220px; border-collapse: collapse;
     font-size: 13px; table-layout: fixed;
   }
   table.ov > thead > tr > th {
@@ -180,6 +180,8 @@
     padding: 1px 5px; border-radius: 4px; margin-left: 6px; vertical-align: 1px;
   }
   .ex { display: block; font-size: 11px; color: var(--ink3); margin-top: 2px; }
+  .spot-px { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .spot-u { font-size: 10px; color: var(--ink3); margin-top: 1px; }
 
   .mx-code { font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
   .mx-month { font-size: 10.5px; font-weight: 400; color: var(--ink3); margin-left: 5px; }
@@ -300,6 +302,7 @@
       <table class="ov">
         <colgroup>
           <col style="width:10%">
+          <col style="width:11%">
           <col style="width:12%">
           <col style="width:12%">
           <col style="width:10%">
@@ -309,7 +312,8 @@
         <thead>
           <tr>
             <th>品种</th>
-            <th>相对最优 <span class="th-note"><i class="dot rel"></i>效率优先</span></th>
+            <th id="thSpot">生意社参考</th>
+            <th>相对最优 <span class="th-note"><i class="dot rel"></i>时间成本优先</span></th>
             <th>绝对最优 <span class="th-note"><i class="dot abs"></i>|基差率| 最大</span></th>
             <th>最新 / 交割价</th>
             <th>期限结构 · 基差率 · 月差率 <span class="th-note">柱下 = 基差率 · 弧线 = 相邻价差率</span></th>
@@ -317,7 +321,7 @@
           </tr>
         </thead>
         <tbody id="list">
-          <tr><td colspan="6" class="empty"><span class="spin"></span>正在加载数据…</td></tr>
+          <tr><td colspan="7" class="empty"><span class="spin"></span>正在加载数据…</td></tr>
         </tbody>
       </table>
     </div>
@@ -325,9 +329,9 @@
 
   <div class="foot">
     基差 = 最近交割合约的最后交易日收盘价 − 合约最新收盘价；基差率 = 基差 ÷ 合约最新收盘价<br>
-    “相对最优” = 以现在为起点、排除最近月，后续合约中 |基差率|÷剩余月数 效率最高；“绝对最优” = |基差率| 最大；柱内蓝点 / 橙点分别对应两者；价格为收盘价，不带千分位<br>
-    已剔除股指/国债、贵金属、强麦等无成交品种，以及成交量 &lt; 50 且持仓量 &lt; 200 的僵尸合约<br>
-    数据来源：新浪财经期货 · GitHub Actions 每个交易日自动更新 · 仅供学习参考，不构成投资建议
+    “相对最优” = 排除最近月后，在方向一致的合约里取 |基差率| − 时间成本 × 剩余月数 最大（时间成本 = min(22% × 最高月效率, 4%/月)）；“绝对最优” = |基差率| 最大；柱内蓝点 / 橙点分别对应两者；价格为收盘价，不带千分位<br>
+    已剔除股指/国债、贵金属、强麦等无成交品种，以及成交量 &lt; 50 且持仓量 &lt; 200 的僵尸合约；生意社参考价取自 100ppi.com 现期表，单位与期货口径不同的品种已折算<br>
+    数据来源：新浪财经期货 · 生意社现货参考 · GitHub Actions 每个交易日自动更新 · 仅供学习参考，不构成投资建议
   </div>
 </div>
 
@@ -431,6 +435,7 @@ function modeContract(v) {
 
 const state = {
   index: null,
+  spot: null,
   ex: "",
   q: "",
   minRate: 0,
@@ -444,10 +449,17 @@ async function boot() {
     if (!r.ok) throw new Error("HTTP " + r.status);
     state.index = await r.json();
   } catch (e) {
-    $("list").innerHTML = `<tr><td colspan="6" class="empty">加载失败：${esc(e.message)}<br>
+    $("list").innerHTML = `<tr><td colspan="7" class="empty">加载失败：${esc(e.message)}<br>
       <span style="font-size:12px">请先运行 pipeline.py 生成 data/index.json</span></td></tr>`;
     return;
   }
+  try {
+    const rs = await fetch("data/spot.json?_=" + Date.now());
+    if (rs.ok) state.spot = await rs.json();
+  } catch (e) { state.spot = null; }
+
+  const sd = state.spot && state.spot.date;
+  $("thSpot").textContent = sd ? `生意社参考（${sd}）` : "生意社参考";
   const nowM = (() => {
     const m = /^(\d{4})-(\d{2})/.exec(state.index.latest_trade_date || "");
     return m ? (Number(m[1]) % 100) * 12 + Number(m[2]) : null;
@@ -679,11 +691,24 @@ function summaryRow(v) {
       <div class="px-row"><span>绝对</span><b>${abs ? fmtPrice(abs.last) : "—"}</b></div>
       <div class="px-row"><span>交割</span><b>${fmtPrice(v.delivery_price)}</b></div>`;
 
+  const sp = state.spot && state.spot.items && state.spot.items[v.code];
+  const spotHtml = sp
+    ? (() => {
+        const eq = sp.price !== sp.raw ? `折 ${fmtPrice(sp.price)}${sp.unit || ""}` : "";
+        const tip = ["生意社 " + (sp.name || v.name),
+          `现货 ${fmtPrice(sp.raw)}${sp.raw_unit || ""}`,
+          eq, sp.note || ""].filter(Boolean).join(" · ");
+        return `<div class="spot-px" title="${esc(tip)}">${fmtPrice(sp.price)}</div>
+          <div class="spot-u">${esc(sp.unit || "")}</div>`;
+      })()
+    : `<span style="color:var(--ink3)">—</span>`;
+
   return `<tr class="vrow" data-code="${esc(v.code)}" tabindex="0">
     <td>
       <span class="vname">${esc(v.name)}</span><span class="vcode">${esc(v.code)}</span>
       <span class="ex">${esc(v.exchange_short)}</span>
     </td>
+    <td>${spotHtml}</td>
     <td>${optHtml(rel, "rel")}</td>
     <td>${optHtml(abs, "abs")}</td>
     <td>${priceHtml}</td>
