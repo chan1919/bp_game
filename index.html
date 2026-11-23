@@ -157,17 +157,20 @@
   table.ov > thead > tr > th {
     position: sticky; top: 0; z-index: 3;
     background: #f8fafc; color: var(--ink2); font-weight: 600;
-    text-align: left; padding: 9px 12px; white-space: nowrap;
+    text-align: left; padding: 9px 8px; white-space: nowrap;
     border-bottom: 1px solid var(--line); font-size: 12px;
   }
   table.ov > thead > tr > th.num { text-align: right; }
   table.ov > thead > tr > th .th-note {
     font-weight: 400; color: var(--ink3); font-size: 10.5px; margin-left: 5px;
   }
+  table.ov > thead > tr > th .th-date {
+    display: block; font-weight: 400; color: var(--ink3); font-size: 10.5px; margin-top: 1px;
+  }
 
   tr.vrow { cursor: pointer; }
   tr.vrow > td {
-    padding: 6px 12px; vertical-align: middle;
+    padding: 6px 8px; vertical-align: middle;
     border-bottom: 1px solid #eef1f6; background: #fff;
     transition: background .1s;
   }
@@ -301,13 +304,13 @@
     <div class="table-wrap">
       <table class="ov">
         <colgroup>
-          <col style="width:10%">
-          <col style="width:11%">
-          <col style="width:12%">
-          <col style="width:12%">
-          <col style="width:10%">
+          <col style="width:118px">
+          <col style="width:108px">
+          <col style="width:118px">
+          <col style="width:118px">
+          <col style="width:88px">
           <col>
-          <col style="width:5%">
+          <col style="width:48px">
         </colgroup>
         <thead>
           <tr>
@@ -459,7 +462,9 @@ async function boot() {
   } catch (e) { state.spot = null; }
 
   const sd = state.spot && state.spot.date;
-  $("thSpot").textContent = sd ? `生意社参考（${sd}）` : "生意社参考";
+  $("thSpot").innerHTML = sd
+    ? `生意社参考<span class="th-date">（${esc(sd)}）</span>`
+    : "生意社参考";
   const nowM = (() => {
     const m = /^(\d{4})-(\d{2})/.exec(state.index.latest_trade_date || "");
     return m ? (Number(m[1]) % 100) * 12 + Number(m[2]) : null;
@@ -846,7 +851,7 @@ function renderList() {
   });
 
   if (!list.length) {
-    $("list").innerHTML = `<tr><td colspan="6" class="empty">没有匹配的品种</td></tr>`;
+    $("list").innerHTML = `<tr><td colspan="7" class="empty">没有匹配的品种</td></tr>`;
     return;
   }
   $("list").innerHTML = list.map(summaryRow).join("");
