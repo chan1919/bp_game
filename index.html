@@ -222,6 +222,7 @@
   .rrate.base { fill: #667085; }
   .rrate.zero { fill: #98a2b3; }
   .rarc { fill: none; stroke: #b4bcc9; stroke-width: 1; }
+  .rarc.hist { stroke: #d0d5dd; stroke-dasharray: 2 2; }
   .rarc-label {
     font-size: 8.5px; font-weight: 700;
     paint-order: stroke; stroke: #fff; stroke-width: 2.4; stroke-linejoin: round;
@@ -230,6 +231,7 @@
   .rarc-label.pos { fill: var(--up); }
   .rarc-label.neg { fill: var(--down); }
   .rarc-label.zero { fill: #667085; }
+  .rarc-label.hist { fill: #98a2b3; }
   .ropt { fill: #fff; stroke-width: 1.7; }
   .ropt.rel { stroke: #3538cd; }
   .ropt.abs { stroke: #d97706; }
@@ -285,7 +287,7 @@
       <option value="15">|基差率| ≥ 15%</option>
       <option value="20">|基差率| ≥ 20%</option>
     </select>
-    <span class="note">基差率：<b class="pos">红 = 贴水</b> · <b class="neg">绿 = 升水</b> · 灰 = 交割月</span>
+    <span class="note">基差率：<b class="pos">红 = 贴水</b> · <b class="neg">绿 = 升水</b> · 灰 = 最近 3 个交割月（最右为当前基准）</span>
   </div>
 
   <div class="card">
@@ -319,7 +321,7 @@
             <th>相对最优 <span class="th-note"><i class="dot rel"></i>时间成本优先</span></th>
             <th>绝对最优 <span class="th-note"><i class="dot abs"></i>|基差率| 最大</span></th>
             <th>最新 / 交割价</th>
-            <th>期限结构 · 基差率 · 月差率 <span class="th-note">柱下 = 基差率 · 弧线 = 相邻价差率</span></th>
+            <th>期限结构 · 基差率 · 月差率 <span class="th-note">左侧灰柱 = 最近3个交割价</span></th>
             <th class="num">合约</th>
           </tr>
         </thead>
@@ -332,8 +334,9 @@
 
   <div class="foot">
     基差 = 最近交割合约的最后交易日收盘价 − 合约最新收盘价；基差率 = 基差 ÷ 合约最新收盘价<br>
+    行内图左侧最多 3 根灰柱为最近 3 个已交割合约的交割价（老 → 新，最右一根为当前基准），仅作历史参考；基差仍按当前基准计算；合约较多时柱下/弧线自动显示整数百分比，悬停可看精确值<br>
     “相对最优” = 排除最近月后，在方向一致的合约里取 |基差率| − 时间成本 × 剩余月数 最大（时间成本 = min(22% × 最高月效率, 4%/月)）；“绝对最优” = |基差率| 最大；柱内蓝点 / 橙点分别对应两者；价格为收盘价，不带千分位<br>
-    已剔除股指/国债、贵金属、强麦等无成交品种，以及成交量 &lt; 50 且持仓量 &lt; 200 的僵尸合约；生意社参考价取自 100ppi.com 现期表，单位与期货口径不同的品种已折算<br>
+    已剔除股指/国债、贵金属、强麦等无成交品种；不再按单个合约的成交量/持仓量过滤；生意社参考价取自 100ppi.com 现期表，单位与期货口径不同的品种已折算<br>
     数据来源：新浪财经期货 · 生意社现货参考 · GitHub Actions 每个交易日自动更新 · 仅供学习参考，不构成投资建议
   </div>
 </div>
@@ -692,9 +695,11 @@ function summaryRow(v) {
       <div class="opt-sub">基差 ${fmtSignedNum(c.basis)}</div>`;
   };
 
+  const dl = Array.isArray(v.deliveries) ? v.deliveries : [];
+  const delTip = dl.map(d => `${d.contract} ${fmtPrice(d.price)}${d.date ? `（${d.date}）` : ""}`).join("\n");
   const priceHtml = `<div class="px-row"><span>相对</span><b>${rel ? fmtPrice(rel.last) : "—"}</b></div>
       <div class="px-row"><span>绝对</span><b>${abs ? fmtPrice(abs.last) : "—"}</b></div>
-      <div class="px-row"><span>交割</span><b>${fmtPrice(v.delivery_price)}</b></div>`;
+      <div class="px-row"${delTip ? ` title="${esc(delTip)}"` : ""}><span>交割</span><b>${fmtPrice(v.delivery_price)}</b></div>`;
 
   const sp = state.spot && state.spot.items && state.spot.items[v.code];
   const spotHtml = sp
@@ -722,7 +727,7 @@ function summaryRow(v) {
   </tr>`;
 }
 
-/* 期限结构图：交割月 + 后续合约。
+/* 期限结构图：最近 3 个交割月 + 后续合约。
    柱高 = 收盘价；柱内竖排 = 基差率；柱间弧线 = 相邻合约价差率。
    价差 = 近月收盘 − 远月收盘；价差率 = 价差 ÷ 远月收盘（与基差同口径）。 */
 function shortCode(code, prefix) {
@@ -731,13 +736,24 @@ function shortCode(code, prefix) {
 }
 
 function termBars(v) {
-  const bars = [{
-    code: v.delivery_contract || "交割",
-    price: v.delivery_price,
+  // deliveries 由数据端给出“老 -> 新”的最近 3 个交割合约;
+  // 旧数据没有该字段时, 退回到只画当前基准这一根.
+  const hist = Array.isArray(v.deliveries) && v.deliveries.length
+    ? v.deliveries
+    : [{
+        contract: v.delivery_contract,
+        price: v.delivery_price,
+        date: v.delivery_date,
+      }];
+  const bars = hist.map((d, i) => ({
+    code: d.contract || "交割",
+    price: d.price,
     basis: null,
     rate: null,
     isBase: true,
-  }];
+    isCurrentBase: i === hist.length - 1,
+    deliveryDate: d.date || "",
+  }));
   for (const c of (v.chain || [])) {
     bars.push({
       code: c.code,
@@ -767,6 +783,11 @@ function rowChart(v) {
   const baseY = pt + ih;
   const step = iw / n;
   const bw = Math.max(6, Math.min(26, step * 0.52));
+  // 柱子多时自动缩小柱下/弧线文字, 并改成整数百分比, 避免 SC 这种 20+ 合约的图挤成一团
+  const compact = step < 30;
+  const rateFs = Math.max(5.8, Math.min(8.5, step * 0.26));
+  const arcFs = Math.max(5.8, Math.min(8.5, step * 0.27));
+  const compactPct = r => `${r > 0 ? "+" : ""}${Math.round(r)}%`;
 
   let grid = "";
   for (let t = 0; t <= 2; t++) {
@@ -786,8 +807,9 @@ function rowChart(v) {
     const top = y(b.price);
     const h = Math.max(baseY - top, 1);
     const cls = b.isBase ? "rbar-base" : (b.rate > 0 ? "rbar-pos" : b.rate < 0 ? "rbar-neg" : "rbar-base");
+    const dateStr = b.deliveryDate ? `（${b.deliveryDate}）` : "";
     const tip = b.isBase
-      ? `交割月 ${b.code} · ${fmtPrice(b.price)}`
+      ? `${b.isCurrentBase ? "当前基准" : "历史交割"} · ${b.code} · 交割价 ${fmtPrice(b.price)}${dateStr}`
       : `${b.code} · 收盘 ${fmtPrice(b.price)}\n基差 ${fmtSignedNum(b.basis)} · 基差率 ${fmtPct(b.rate)}`;
     out += `<g class="rbar-g"><title>${esc(tip)}</title>` +
       `<rect class="${cls}" x="${cx - bw / 2}" y="${top}" width="${bw}" height="${h}" rx="1.5"></rect>`;
@@ -805,13 +827,19 @@ function rowChart(v) {
       if (v._abs && b.code === v._abs.code) absMark = { x: cx, y: top + 5 };
     }
     const rc = b.isBase ? "base" : (b.rate > 0 ? "pos" : b.rate < 0 ? "neg" : "zero");
-    out += `<text class="rrate ${rc}" x="${cx}" y="${H - 4}" text-anchor="middle">${esc(b.isBase ? "基准" : fmtPct(b.rate))}</text>`;
+    const bottomLabel = b.isBase
+      ? (b.isCurrentBase ? "基准" : "交割")
+      : (compact ? compactPct(b.rate) : fmtPct(b.rate));
+    out += `<text class="rrate ${rc}" x="${cx}" y="${H - 4}" text-anchor="middle" style="font-size:${rateFs.toFixed(1)}px">${esc(bottomLabel)}</text>`;
   });
 
-  // 弧线覆盖所有相邻柱，包括 交割月 -> 最近月
+  // 弧线覆盖所有相邻柱, 包括 交割月 -> 最近月.
+  // 两根灰柱之间是“交割价差率”(不同交割月的最终交割价), 用灰色虚线区分;
+  // 当前基准 -> 最近月以及后续合约仍是原来的价差率.
   for (let i = 0; i < n - 1; i++) {
     const a = bars[i], b = bars[i + 1];
     if (a.price == null || b.price == null || !a.price || !b.price) continue;
+    const bothBase = a.isBase && b.isBase;
     const x1 = pl + step * (i + 0.5), y1 = y(a.price);
     const x2 = pl + step * (i + 1.5), y2 = y(b.price);
     const mx = (x1 + x2) / 2;
@@ -819,12 +847,15 @@ function rowChart(v) {
     const spread = Math.round((a.price - b.price) * 100) / 100;
     const rate = Math.round(spread / b.price * 10000) / 100;
     const apexY = (y1 + 2 * my + y2) / 4;
-    const cls = rate > 0 ? "pos" : rate < 0 ? "neg" : "zero";
-    const tip = `${a.code} ${fmtPrice(a.price)} -> ${b.code} ${fmtPrice(b.price)}` +
-      `\n价差 ${fmtSignedNum(spread)} · 价差率 ${fmtPct(rate)}`;
+    const cls = bothBase ? "hist" : (rate > 0 ? "pos" : rate < 0 ? "neg" : "zero");
+    const tip = bothBase
+      ? `${a.code} 交割价 ${fmtPrice(a.price)} -> ${b.code} 交割价 ${fmtPrice(b.price)}` +
+        `\n交割价差 ${fmtSignedNum(spread)} · 交割价差率 ${fmtPct(rate)}`
+      : `${a.code} ${fmtPrice(a.price)} -> ${b.code} ${fmtPrice(b.price)}` +
+        `\n价差 ${fmtSignedNum(spread)} · 价差率 ${fmtPct(rate)}`;
     out += `<g><title>${esc(tip)}</title>` +
-      `<path class="rarc" d="M${x1} ${y1} Q${mx} ${my} ${x2} ${y2}"></path>` +
-      `<text class="rarc-label ${cls}" x="${mx}" y="${apexY - 2.5}" text-anchor="middle">${fmtPct(rate)}</text>` +
+      `<path class="rarc${bothBase ? " hist" : ""}" d="M${x1} ${y1} Q${mx} ${my} ${x2} ${y2}"></path>` +
+      `<text class="rarc-label ${cls}" x="${mx}" y="${apexY - 2.5}" text-anchor="middle" style="font-size:${arcFs.toFixed(1)}px">${compact ? compactPct(rate) : fmtPct(rate)}</text>` +
       `</g>`;
   }
 
@@ -838,7 +869,7 @@ function rowChart(v) {
       `<title>绝对最优</title></circle>`;
   }
 
-  return `<svg class="rchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="期限结构、基差率与相邻价差率">
+  return `<svg class="rchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="最近3个交割月、期限结构、基差率与相邻价差率">
     ${grid}<line class="zero" x1="${pl}" y1="${baseY}" x2="${W - pr}" y2="${baseY}"></line>${out}</svg>`;
 }
 

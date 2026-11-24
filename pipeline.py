@@ -277,8 +277,10 @@ def is_expired(ym, cur_ym, last_date, latest_date, pos, listed):
     if pos == 0:
         return True
     if not listed:
-        # 已从挂牌列表消失, 且最后一根日线不晚于全市场最新交易日 -> 已交割
-        return bool(last_date and latest_date and last_date <= latest_date)
+        # 已从挂牌列表消失, 且最后一根日线早于全市场最新交易日 -> 已交割.
+        # 必须用严格小于: 有时挂牌列表会暂时漏掉仍在交易的当月合约
+        # (例如 EG2611), 但它当天仍有 K 线, 不能只因为列表里没有就判交割.
+        return bool(last_date and latest_date and last_date < latest_date)
     # 当月合约仍在挂牌: 只有明显落后于最新交易日(>3 个自然日)才视为已交割,
     # 当天/前一天日线还没更新不能算.
     if last_date and latest_date:
@@ -343,11 +345,12 @@ def build_variety(v, latest_date, now, log):
         log("%s %-8s 合约太少(%d)" % (prefix, v["name"], len(contracts)))
         return None, None
 
-    # ---- 找最近已交割合约: 从当前月往前逐月试探 ----
+    # ---- 找最近 3 个已交割合约: 从当前月往前逐月试探 ----
     # 不能从挂牌列表的最小月份开始: 列表里可能混着多年前的老合约;
     # 也不能直接跳过当前月, 因为当前月可能已经交割 (如 11 月中的 BU2611).
+    # deliveries 按"新 -> 老"收集, 后面会反转成"老 -> 新"给图表用.
     first_ym = cur_ym
-    delivery = None
+    deliveries = []
     ym = first_ym
     for _ in range(MAX_MONTHS_BACK):
         sym = contract_code(prefix, ym)
@@ -367,22 +370,24 @@ def build_variety(v, latest_date, now, log):
                         real = b
                         break
                 price = num(real.get("c")) or num(real.get("s"))
-                if not price or price <= 0:
-                    break
-                delivery = {
-                    "contract": sym,
-                    "ym": ym,
-                    "price": price,
-                    "date": real.get("d") or last_date,
-                    "close": num(real.get("c")),
-                    "settlement": num(real.get("s")),
-                    "volume": int(float(real.get("v") or 0)),
-                }
-                break
+                if price and price > 0:
+                    deliveries.append({
+                        "contract": sym,
+                        "ym": ym,
+                        "price": price,
+                        "date": real.get("d") or last_date,
+                        "close": num(real.get("c")),
+                        "settlement": num(real.get("s")),
+                        "volume": int(float(real.get("v") or 0)),
+                    })
+                    if len(deliveries) >= 3:
+                        break
         ym = ym_prev(ym)
-    if not delivery:
+    if not deliveries:
         log("%s %-8s 未找到交割合约" % (prefix, v["name"]))
         return None, None
+    delivery = deliveries[0]
+    delivery_history = list(reversed(deliveries))  # 老 -> 新, 图表从左到右
 
     base = delivery["price"]
 
@@ -487,6 +492,7 @@ def build_variety(v, latest_date, now, log):
         "latest_trade_date": latest_date,
         "window": {"start": axis[0], "end": axis[-1], "days": WINDOW_DAYS},
         "delivery": delivery,
+        "deliveries": delivery_history,
         "dates": axis,
         "contracts": out,
     }
@@ -499,6 +505,8 @@ def build_variety(v, latest_date, now, log):
         "delivery_contract": delivery["contract"],
         "delivery_price": base,
         "delivery_date": delivery["date"],
+        # 最近 3 个已交割合约, 老 -> 新; 最后一个是当前基准
+        "deliveries": delivery_history,
         "contracts": len(out),
         "front": out[0]["code"],
         "front_basis_rate": out[0]["basis_rate"],
